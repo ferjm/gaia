@@ -52,7 +52,7 @@ var TrustedUIManager = {
     var event = document.createEvent('customEvent');
     var details = {
       id: eventId,
-      type: 'close' //TBD
+      errorMsg: 'dialogClosedByUser'
     };
     event.initCustomEvent('mozContentEvent', true, true, details);
     window.dispatchEvent(event);
@@ -86,7 +86,7 @@ var TrustedUIManager = {
       WindowManager.restoreCurrentApp();
     }.bind(this));
 
-    self.screen.classList.remove('trustedui');
+    this.screen.classList.remove('trustedui');
     if (callback)
       callback();
 
