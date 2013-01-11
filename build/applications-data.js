@@ -105,7 +105,8 @@ let customize = {"homescreens": [
     ["apps", "costcontrol"],
     ["apps", "email"],
     ["apps", "music"],
-    ["apps", "video"]
+    ["apps", "video"],
+    ["external-apps", "marketplace-dev"]
   ]
 ]};
 
