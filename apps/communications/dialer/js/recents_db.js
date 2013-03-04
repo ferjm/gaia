@@ -150,39 +150,52 @@ var RecentsDBManager = {
     });
   },
   // Method for retrieving all recents from DB
-  get: function rdbm_get(callback) {
-    var objectStore = this.db.transaction(RecentsDBManager._dbStore).
-                        objectStore(RecentsDBManager._dbStore);
-    var recents = [];
-    var cursor = objectStore.openCursor(null, 'prev');
-    cursor.onsuccess = function(event) {
-      var item = event.target.result;
-      if (item) {
-        recents.push(item.value);
-        item.continue();
-      } else {
-        callback(recents);
+  get: function rdbm_get(callback, dateFilter) {
+    this._checkDBReady(function() {
+      var objectStore = this.db.transaction(RecentsDBManager._dbStore).
+                          objectStore(RecentsDBManager._dbStore);
+      var recents = [];
+      // Number 0 is smaller than any timestamp and empty string is larger
+      // than all numeric values.
+      var startDate = 0, endDate = '';
+      if (dateFilter && dateFilter.startDate) {
+        startDate = dateFilter.startDate;
       }
-    };
+      if (dateFilter && dateFilter.endDate) {
+        endDate = dateFilter.endDate;
+      }
+      var range = IDBKeyRange.bound(startDate, endDate);
+      var cursor = objectStore.openCursor(range, 'prev');
+      cursor.onsuccess = function(event) {
+        var item = event.target.result;
+        if (item) {
+          recents.push(item.value);
+          item.continue();
+        } else {
+          callback(recents);
+        }
+      };
 
-    cursor.onerror = function(e) {
-      console.log('recents_db get failure: ', e.message);
-    };
+      cursor.onerror = function(e) {
+        console.log('recents_db get failure: ', e.message);
+      };
+    });
   },
-
   getLast: function rdbm_getLast(callback) {
-    var objectStore = this.db.transaction(RecentsDBManager._dbStore).
-                        objectStore(RecentsDBManager._dbStore);
-    var cursor = objectStore.openCursor(null, 'prev');
-    cursor.onsuccess = function(event) {
-      var item = event.target.result;
-      if (item) {
-        callback(item.value);
-      }
-    };
+    this._checkDBReady(function() {
+      var objectStore = this.db.transaction(RecentsDBManager._dbStore).
+                          objectStore(RecentsDBManager._dbStore);
+      var cursor = objectStore.openCursor(null, 'prev');
+      cursor.onsuccess = function(event) {
+        var item = event.target.result;
+        if (item) {
+          callback(item.value);
+        }
+      };
 
-    cursor.onerror = function(e) {
-      console.log('recents_db get failure: ', e.message);
-    };
+      cursor.onerror = function(e) {
+        console.log('recents_db get failure: ', e.message);
+      };
+    });
   }
 };
