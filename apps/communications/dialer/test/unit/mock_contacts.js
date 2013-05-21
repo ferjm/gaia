@@ -20,7 +20,7 @@ var MockContacts = {
       tel: [tel],
       photo: [this.mPhoto]
     };
-    var contactsWithSameNumber = 0;
+    var ids = [];
     switch (number) {
       case '111':
         this.mPhoto = null;
@@ -29,12 +29,12 @@ var MockContacts = {
         tel = null;
         break;
       case '222':
-        contactsWithSameNumber = 2;
+        ids = ['id1', 'id2'];
         break;
       default:
     }
 
-    callback(contact, tel, contactsWithSameNumber);
+    callback(contact, tel, ids);
   },
   findListByNumber: function cm_getContactData(number, maxitems, callback) {
     callback(this.mResult);

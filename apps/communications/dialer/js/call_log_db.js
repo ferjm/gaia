@@ -5,7 +5,7 @@ var CallLogDBManager = {
   _dbName: 'dialerRecents',
   _dbRecentsStore: 'dialerRecents',
   _dbGroupsStore: 'dialerGroups',
-  _dbVersion: 3,
+  _dbVersion: 4,
 
   /*
    * Prepare the database. This may include opening the database and upgrading
@@ -23,6 +23,8 @@ var CallLogDBManager = {
       callback(null, this._db);
       return;
     }
+
+    LazyLoader.load(['/dialer/js/utils.js', '/dialer/js/contacts.js']);
 
     try {
       var indexedDB = window.indexedDB || window.webkitIndexedDB ||
@@ -59,7 +61,10 @@ var CallLogDBManager = {
               this._upgradeSchemaVersion2(db, txn);
               break;
             case 2:
-              this._upgradeSchemaVersion3(db, txn);
+              this._upgradeSchemaVersion3();
+              break;
+            case 3:
+              this._upgradeSchemaVersion4(db, txn);
               break;
             default:
               event.target.transaction.abort();
@@ -165,48 +170,82 @@ var CallLogDBManager = {
     recentsStore.createIndex('groupId', 'groupId');
   },
   /**
-   * Upgrade schema to version 3. Recreate the object store to host groups of
+   * All the required changes for v3 are done while upgrading to v4.
+   */
+  _upgradeSchemaVersion3: function rdbm_upgradeSchemaVersion3() {
+    // Do nothing.
+  },
+  /**
+   * Upgrade schema to version 4. Recreate the object store to host groups of
    * calls with a new schema changing the old string primary key for an array
    * which will contain the date of the first call of the group, the phone
    * number associated with the call, the type of the call (incoming, dialing)
-   * and the status of the call (accepted or not). We also need to remove the
-   * unused 'contact' field and add a new 'lastEntryDate' field containing the
-   * date of the last call of the group.
+   * and the status of the call (accepted or not). We also add a new
+   * 'lastEntryDate' field containing the date of the last call of the group
+   * and substitute the unused 'contact' field by a more detailed contact
+   * information to avoid querying the contacts API database each time that
+   * we need to render the call log.
    *
    * param db
    *        Database instance.
    * param transaction
    *        IDB transaction instance.
    */
-  _upgradeSchemaVersion3: function rdbm_upgradeSchemaVersion3(db, transaction) {
-    // First of all, we delete the old groups object store.
+  _upgradeSchemaVersion4: function rdbm_upgradeSchemaVersion4(db, transaction) {
+    var groupsStore = transaction.objectStore(this._dbGroupsStore);
+
+    // First of all we delete the old groups object store.
     db.deleteObjectStore(this._dbGroupsStore);
 
     // We recreate the object store that can be used to quickly construct a
     // group view of the recent calls database. Each entry looks like this:
-    //
-    // { id: [date<Date>, number<String>, type<String>, status<String>]
-    //   lastEntryDate: <Date>,
-    //   retryCount: <Number> }
+    // { id: [date<Date>, number<String>, type<String>, status<String>],
+    //   lastEntryDate: <Date>, (index)
+    //   retryCount: <Number>,
+    //   contactId: <String>, (index)
+    //   contactPrimaryInfo: <String>,
+    //   contactMatchingTelType: <String>,
+    //   contactMatchingTelCarrier: <String>,
+    //   contactPhoto: <Boolean>,
+    //   otherContactIds: [<String>(0..n)] (index) }
     //
     //  The <Date> value from the 'id' field contains only the day of the call.
     //
     //  'lastEntryDate' contains a full date.
     //
     //  'retryCount' is incremented when we store a new call.
+    //
+    //  A group of calls can be associated with one or more contacts, but the
+    //  UI only shows detailed information for the main contact, so we store
+    //  store these details in the 'contactId', 'contactPrimaryInfo',
+    //  'contactMatchingTelType', 'contactMatchingTelCarrier' and 'contactPhoto'
+    //  fields, but we also keep a list of the ids of the other contacts
+    //  associated with the group.
     var groupsStore = db.createObjectStore(this._dbGroupsStore,
                                            { keyPath: 'id' });
+
+    // We create indexes for 'contact-id' and 'other-contact-ids' fields as we
+    // will be searching groups by contact and for the 'lastEntryDate' as we
+    // also be searching by date.
+    groupsStore.createIndex('contactId', 'contactId');
+    groupsStore.createIndex('otherContactIds', 'otherContactIds');
     groupsStore.createIndex('lastEntryDate', 'lastEntryDate');
 
-    var recentsStore = transaction.objectStore(this._dbRecentsStore);
-    // Populate quick groups view with already existing calls.
+    var waitForAsyncCall = 0;
+    var cursorDone = false;
+
+    // Populate quick group view with already existing calls information.
     var groups = {};
+    var groupsAfterCursorDone = {};
+    var recentsStore = transaction.objectStore(this._dbRecentsStore);
     recentsStore.openCursor().onsuccess = (function(event) {
       var cursor = event.target.result;
       if (!cursor) {
-        for (var group in groups) {
-          groupsStore.put(groups[group]);
-        }
+        // As soon as the cursor is done, we bail out. We still need to wait
+        // for all the async calls to retrieve the contacts information to
+        // finish before pushing the data to the groups object store. We will
+        // notify the UI about that so it can request the data again.
+        cursorDone = true;
         return;
       }
 
@@ -243,38 +282,72 @@ var CallLogDBManager = {
         key += status;
       }
 
-      // Store the group or increment the 'retryCount' field if we already
-      // created a group for this call.
-      if (key in groups) {
-        groups[key].retryCount++;
-      } else {
-        groups[key] = {
-          id: id,
-          lastEntryDate: this._getDayDate(record.date),
-          retryCount: 1
-        };
-      }
-
       // Update the call with the generated groupId.
       record.groupId = id;
       recentsStore.put(record);
+
+      // Get the contact information associated with the number.
+      waitForAsyncCall++;
+      Contacts.findByNumber(record.number,
+                            (function(contact, matchingTel, ids) {
+        waitForAsyncCall--;
+
+        // Store the group or increment the 'retryCount' field if we already
+        // created a group for this call.
+        if (key in groups) {
+          groups[key].retryCount++;
+        } else {
+          var group = {
+            id: id,
+            lastEntryDate: Utils.getDayDate(record.date),
+            retryCount: 1
+          };
+          if (contact && contact !== null) {
+            group.contactId = contact.id;
+            var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel,
+                                                              contact);
+            if (Array.isArray(primaryInfo)) {
+              primaryInfo = primaryInfo[0];
+            }
+            group.contactPrimaryInfo = String(primaryInfo);
+            if (Array.isArray(matchingTel.type)) {
+              matchingTel.type = matchingTel.type[0];
+            }
+            group.contactMatchingTelType = String(matchingTel.type);
+            group.contactMatchingTelCarrier = matchingTel.carrier;
+            group.contactPhoto = !!contact.photo;
+            group.otherContactsIds = ids;
+          };
+          groups[key] = group;
+
+          // Once we built all the groups of call we can push them to the
+          // groups object store and notify the UI about it.
+          if (cursorDone && !waitForAsyncCall) {
+            this._newTxn('readwrite', [this._dbGroupsStore],
+                         function(error, txn, store) {
+              if (error) {
+                console.log("ERROR upgrading the database " + error);
+                return;
+              }
+
+              for (var group in groups) {
+                store.put(groups[group]);
+                delete groups[group];
+              }
+
+              // TODO: notify UI
+            });
+          }
+        }
+      }).bind(this));
       cursor.continue();
     }).bind(this);
-  },
-  /**
-   * Helper function to get the day date from a full date.
-   */
-  _getDayDate: function rdbm_getDayDate(timestamp) {
-    var date = new Date(timestamp),
-        startDate = new Date(date.getFullYear(),
-                             date.getMonth(), date.getDate());
-    return startDate.getTime();
   },
   /**
    * Helper function to get the group ID from a recent call object.
    */
   _getGroupId: function rdbm_getGroupId(recentCall) {
-    var groupId = [this._getDayDate(recentCall.date),
+    var groupId = [Utils.getDayDate(recentCall.date),
                    recentCall.number, recentCall.type];
     if (recentCall.status && recentCall.type === 'incoming') {
       groupId.push(recentCall.status);

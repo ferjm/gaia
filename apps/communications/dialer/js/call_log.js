@@ -419,7 +419,7 @@ var CallLog = {
     var phoneNumber = phoneNumbers.shift();
     var self = this;
     var container = target || this.callLogContainer;
-    var callback = function(contact, matchingTel, sameNum) {
+    var callback = function(contact, matchingTel, ids) {
       var selector = '[data-phone-number="' + phoneNumber + '"]';
       var logsToUpdate = container.querySelectorAll(selector);
       for (var j = 0, l = logsToUpdate.length; j < l; j++) {
@@ -428,7 +428,7 @@ var CallLog = {
             element: logsToUpdate[j],
             contact: contact,
             matchingTel: matchingTel,
-            contactsWithSameNumber: sameNum
+            contactsWithSameNumber: ids.length || 0
           };
         } else {
           var infoToUpdate = {

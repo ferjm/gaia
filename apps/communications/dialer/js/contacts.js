@@ -90,7 +90,7 @@ var Contacts = {
         filterValue: number
       };
     } else {
-      // get the phone number variants
+      // Get the phone number variants.
       variants = SimplePhoneMatcher.generateVariants(number);
 
       options = {
@@ -106,7 +106,8 @@ var Contacts = {
 
     var request = mozContacts.find(options);
     request.onsuccess = function findCallback() {
-      if (request.result.length === 0) {
+      var contacts = request.result;
+      if (contacts.length === 0) {
         // Checking if FB is enabled or not
         window.asyncStorage.getItem('tokenData', function(data) {
           if (!data || !data.access_token) {
@@ -127,8 +128,9 @@ var Contacts = {
         return;
       }
 
-      // formatting the matches as an array (contacts) of arrays (phone numbers)
-      var matches = request.result.map(function getTels(contact) {
+      var ids = [];
+      var matches = contacts.map(function getTels(contact) {
+        ids.push(String(contact.id));
         return contact.tel.map(function getNumber(tel) {
           return tel.value;
         });
@@ -137,10 +139,12 @@ var Contacts = {
       // Finding the best match
       var matchResult = SimplePhoneMatcher.bestMatch(variants, matches);
 
-      var contact = request.result[matchResult.bestMatchIndex];
-      var contactsWithSameNumber;
-      if (request.result.length > 1) {
-        contactsWithSameNumber = request.result.length - 1;
+      var contact = contacts[matchResult.bestMatchIndex];
+
+      // Remove id from other ids array.
+      var index = ids.indexOf(contact.id);
+      if (index !== -1) {
+        ids.splice(index, 1);
       }
 
       var matchingTel = contact.tel[matchResult.localIndex];
@@ -148,16 +152,15 @@ var Contacts = {
         // Merge with the FB data
         var req = fb.contacts.get(fb.getFriendUid(contact));
         req.onsuccess = function() {
-          callback(fb.mergeContact(contact, req.result), matchingTel,
-            contactsWithSameNumber);
+          callback(fb.mergeContact(contact, req.result), matchingTel, ids);
         };
         req.onerror = function() {
           window.console.error('Error while getting FB Data');
-          callback(contact, matchingTel, contactsWithSameNumber);
+          callback(contact, matchingTel, ids);
         };
       }
       else {
-        callback(contact, matchingTel, contactsWithSameNumber);
+        callback(contact, matchingTel, ids);
       }
     };
     request.onerror = function findError() {

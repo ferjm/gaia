@@ -126,7 +126,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
 
   var self = this;
   Contacts.findByNumber(number,
-    function lookupContact(contact, matchingTel, contactsWithSameNumber) {
+    function lookupContact(contact, matchingTel, ids) {
       if (contact) {
         var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel, contact);
         var contactCopy = {
@@ -158,7 +158,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
         self.recentsEntry.contactInfo = {
           matchingTel: JSON.stringify(matchingTel),
           contact: JSON.stringify(contactCopy),
-          contactsWithSameNumber: contactsWithSameNumber || 0
+          contactsWithSameNumber: ids.length || 0
         };
         return;
       }
