@@ -5,7 +5,53 @@ var CallLogDBManager = {
   _dbName: 'dialerRecents',
   _dbRecentsStore: 'dialerRecents',
   _dbGroupsStore: 'dialerGroups',
-  _dbVersion: 3,
+  _dbVersion: 4,
+  _observers: {},
+
+  /**
+   * Add a observer of the 'upgradeneeded' event, which is fired as soon as the
+   * indexedDB API fires an 'onupgradeneeded' event while trying to open the
+   * database.
+   * We need to notify the UI about a database upgrade so the proper feedback
+   * can be provided to the user. Database upgrades can be quite large.
+   */
+  set onupgradeneeded(callback) {
+    this._addObserver('upgradeneeded', callback);
+  },
+
+  /**
+   * Add a observer of the 'upgradedone' event, which is fired as soon as we
+   * push the latest upgraded record into the upgraded object stores.
+   */
+  set onupgradedone(callback) {
+    this._addObserver('upgradedone', callback);
+  },
+
+  _addObserver: function _addObserver(message, callback) {
+    if (!this._observers[message]) {
+      this._observers[message] = [];
+    }
+    this._observers[message].push(callback);
+  },
+
+  _notifyObservers: function _notifyObservers(message) {
+    var observers = this._observers[message];
+    if (!observers) {
+      return;
+    }
+
+    for (var callback in observers) {
+      if (observers[callback] && typeof observers[callback] === 'function') {
+        observers[callback]();
+      }
+    }
+  },
+
+  _asyncReturn: function _asyncReturn(callback, result) {
+    if (callback && callback instanceof Function) {
+      callback(result);
+    }
+  },
 
   /*
    * Prepare the database. This may include opening the database and upgrading
@@ -18,11 +64,13 @@ var CallLogDBManager = {
    *
    * return (via callback) a database ready for use.
    */
-  _ensureDB: function rdbm_ensureDB(callback) {
+  _ensureDB: function ensureDB(callback) {
     if (this._db) {
       callback(null, this._db);
       return;
     }
+
+    LazyLoader.load(['/dialer/js/utils.js', '/dialer/js/contacts.js']);
 
     try {
       var indexedDB = window.indexedDB || window.webkitIndexedDB ||
@@ -33,20 +81,23 @@ var CallLogDBManager = {
       }
 
       var request = indexedDB.open(this._dbName, this._dbVersion);
-      request.onsuccess = (function(event) {
+      request.onsuccess = (function onsuccess(event) {
         this._db = event.target.result;
         callback(null, this._db);
       }).bind(this);
 
-      request.onerror = function(event) {
+      request.onerror = function onerror(event) {
         callback(event.target.errorCode, null);
       };
 
-      request.onblocked = function() {
+      request.onblocked = function onblocked() {
         callback('DB_REQUEST_BLOCKED', null);
       };
 
-      request.onupgradeneeded = (function(event) {
+      request.onupgradeneeded = (function onupgradeneeded(event) {
+        // Notify the UI about the need to upgrade the database.
+        this._notifyObservers('upgradeneeded');
+
         var db = event.target.result;
         var txn = event.target.transaction;
         var currentVersion = event.oldVersion;
@@ -59,7 +110,10 @@ var CallLogDBManager = {
               this._upgradeSchemaVersion2(db, txn);
               break;
             case 2:
-              this._upgradeSchemaVersion3(db, txn);
+              this._upgradeSchemaVersion3();
+              break;
+            case 3:
+              this._upgradeSchemaVersion4(db, txn);
               break;
             default:
               event.target.transaction.abort();
@@ -86,7 +140,7 @@ var CallLogDBManager = {
    *        stores that you need to access. If you need to access only one
    *        object store, you can specify its name as a string.
    */
-  _newTxn: function rdbm_newTxn(txnType, objectStores, callback) {
+  _newTxn: function newTxn(txnType, objectStores, callback) {
     if (!objectStores) {
       objectStores = [this._dbGroupsStore];
     }
@@ -121,7 +175,7 @@ var CallLogDBManager = {
    * param db
    *        Database instance.
    */
-  _createSchema: function rdbm_createSchema(db) {
+  _createSchema: function createSchema(db) {
     // The object store hosting the recents calls will contain entries like:
     // { date: <Date> (primary key),
     //   number: <String>,
@@ -165,29 +219,44 @@ var CallLogDBManager = {
     recentsStore.createIndex('groupId', 'groupId');
   },
   /**
-   * Upgrade schema to version 3. Recreate the object store to host groups of
+   * All the required changes for v3 are done while upgrading to v4.
+   */
+  _upgradeSchemaVersion3: function upgradeSchemaVersion3() {
+    // Do nothing.
+  },
+  /**
+   * Upgrade schema to version 4. Recreate the object store to host groups of
    * calls with a new schema changing the old string primary key for an array
    * which will contain the date of the first call of the group, the phone
    * number associated with the call, the type of the call (incoming, dialing)
-   * and the status of the call (accepted or not). We also need to remove the
-   * unused 'contact' field and add a new 'lastEntryDate' field containing the
-   * date of the last call of the group.
+   * and the status of the call (accepted or not). We also add a new
+   * 'lastEntryDate' field containing the date of the last call of the group
+   * and substitute the unused 'contact' field by a more detailed contact
+   * information to avoid querying the contacts API database each time that
+   * we need to render the call log.
    *
    * param db
    *        Database instance.
    * param transaction
    *        IDB transaction instance.
    */
-  _upgradeSchemaVersion3: function rdbm_upgradeSchemaVersion3(db, transaction) {
-    // First of all, we delete the old groups object store.
+  _upgradeSchemaVersion4: function upgradeSchemaVersion4(db, transaction) {
+    var groupsStore = transaction.objectStore(this._dbGroupsStore);
+
+    // First of all we delete the old groups object store.
     db.deleteObjectStore(this._dbGroupsStore);
 
     // We recreate the object store that can be used to quickly construct a
     // group view of the recent calls database. Each entry looks like this:
-    //
-    // { id: [date<Date>, number<String>, type<String>, status<String>]
-    //   lastEntryDate: <Date>,
-    //   retryCount: <Number> }
+    // { id: [date<Date>, number<String>, type<String>, status<String>],
+    //   lastEntryDate: <Date>, (index)
+    //   retryCount: <Number>,
+    //   number: <String>, (index)
+    //   contactId: <String>, (index)
+    //   contactPrimaryInfo: <String>,
+    //   contactMatchingTelType: <String>,
+    //   contactMatchingTelCarrier: <String>,
+    //   contactPhoto: <Blob> }
     //
     //  The <Date> value from the 'id' field contains only the day of the call.
     //
@@ -196,17 +265,31 @@ var CallLogDBManager = {
     //  'retryCount' is incremented when we store a new call.
     var groupsStore = db.createObjectStore(this._dbGroupsStore,
                                            { keyPath: 'id' });
+
+    // We create indexes for 'contact-id', 'number' and 'lastEntryDate'
+    // as we will be searching by number, contact and date.
+    // Unfortunately, even if we have the number data in the group id field, we
+    // can't search for [*, "exact number match", *, *], so we need a new
+    // 'number' index.
+    groupsStore.createIndex('number', 'number');
+    groupsStore.createIndex('contactId', 'contactId');
     groupsStore.createIndex('lastEntryDate', 'lastEntryDate');
 
-    var recentsStore = transaction.objectStore(this._dbRecentsStore);
-    // Populate quick groups view with already existing calls.
+    var waitForAsyncCall = 0;
+    var cursorDone = false;
+
+    // Populate quick group view with already existing calls information.
     var groups = {};
-    recentsStore.openCursor().onsuccess = (function(event) {
+    var groupCount = 0;
+    var recentsStore = transaction.objectStore(this._dbRecentsStore);
+    recentsStore.openCursor().onsuccess = (function onsuccess(event) {
       var cursor = event.target.result;
       if (!cursor) {
-        for (var group in groups) {
-          groupsStore.put(groups[group]);
-        }
+        // As soon as the cursor is done, we bail out. We still need to wait
+        // for all the async calls to retrieve the contacts information to
+        // finish before pushing the data to the groups object store. We will
+        // notify the UI about that so it can request the data again.
+        cursorDone = true;
         return;
       }
 
@@ -243,38 +326,76 @@ var CallLogDBManager = {
         key += status;
       }
 
-      // Store the group or increment the 'retryCount' field if we already
-      // created a group for this call.
-      if (key in groups) {
-        groups[key].retryCount++;
-      } else {
-        groups[key] = {
-          id: id,
-          lastEntryDate: this._getDayDate(record.date),
-          retryCount: 1
-        };
-      }
+      // Get the contact information associated with the number.
+      waitForAsyncCall++;
+      Contacts.findByNumber(record.number,
+                            (function(contact, matchingTel) {
+        waitForAsyncCall--;
 
-      // Update the call with the generated groupId.
-      record.groupId = id;
-      recentsStore.put(record);
+        // Store the group or increment the 'retryCount' field if we already
+        // created a group for this call.
+        if (key in groups) {
+          groups[key].retryCount++;
+        } else {
+          var group = {
+            id: id,
+            number: record.number,
+            lastEntryDate: record.date,
+            retryCount: 1
+          };
+          if (contact && contact !== null) {
+            group.contactId = contact.id;
+            if (Array.isArray(contact.photo) && contact.photo[0]) {
+              group.contactPhoto = contact.photo[0];
+            }
+            if (matchingTel) {
+              var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel,
+                                                                contact);
+              if (Array.isArray(primaryInfo)) {
+                primaryInfo = primaryInfo[0];
+              }
+              group.contactPrimaryInfo = String(primaryInfo);
+              if (Array.isArray(matchingTel.type) && matchingTel.type[0]) {
+                group.contactMatchingTelType = String(matchingTel.type[0]);
+              }
+              if (matchingTel.carrier) {
+                group.contactMatchingTelCarrier = String(matchingTel.carrier);
+              }
+            }
+          };
+          groups[key] = group;
+          groupCount++;
+        }
+        // Once we built all the group of calls we can push them to the
+        // groups object store and notify the UI about it.
+        if (cursorDone && !waitForAsyncCall) {
+          this._newTxn('readwrite', [this._dbGroupsStore],
+                       (function(error, txn, store) {
+            if (error) {
+              console.log('Error upgrading the database ' + error);
+              return;
+            }
+
+            for (var group in groups) {
+              store.put(groups[group]).onsuccess = (function onsuccess() {
+                groupCount--;
+                if (groupCount == 0) {
+                  this._notifyObservers('upgradedone');
+                }
+              }).bind(this);
+              delete groups[group];
+            }
+          }).bind(this));
+        }
+      }).bind(this));
       cursor.continue();
     }).bind(this);
   },
   /**
-   * Helper function to get the day date from a full date.
-   */
-  _getDayDate: function rdbm_getDayDate(timestamp) {
-    var date = new Date(timestamp),
-        startDate = new Date(date.getFullYear(),
-                             date.getMonth(), date.getDate());
-    return startDate.getTime();
-  },
-  /**
    * Helper function to get the group ID from a recent call object.
    */
-  _getGroupId: function rdbm_getGroupId(recentCall) {
-    var groupId = [this._getDayDate(recentCall.date),
+  _getGroupId: function getGroupId(recentCall) {
+    var groupId = [Utils.getDayDate(recentCall.date),
                    recentCall.number, recentCall.type];
     if (recentCall.status && recentCall.type === 'incoming') {
       groupId.push(recentCall.status);
@@ -287,12 +408,18 @@ var CallLogDBManager = {
    * Group objects are stored in the database as:
    *
    * { id: [date<Date>, number<String>, type<String>, status<String>]
+   *   number: <String>,
    *   lastEntryDate: <Date>,
-   *   retryCount: <Number> }
+   *   retryCount: <Number>,
+   *   contactId: <String>,
+   *   contactPrimaryInfo: <String>,
+   *   contactMatchingTelType: <String>,
+   *   contactMatchingTelCarrier: <String>,
+   *   contactPhoto: <Blob> }
    *
    * but consumers might find this format hard to handle, so we unwrap the
-   * data inside the 'id' field to create a more manageable object of this
-   * form:
+   * data inside the 'id' and contact related fields to create a more
+   * manageable object of this form:
    *
    * {
    *   id: <String>,
@@ -301,11 +428,36 @@ var CallLogDBManager = {
    *   type: <String>,
    *   status: <String>,
    *   lastEntryDate: <Date>,
-   *   retryCount: <Number> }
+   *   retryCount: <Number>,
+   *   contact: {
+   *    id: <String>,
+   *    primaryInfo: <String>,
+   *    matchingTel: {
+   *      number: <String>,
+   *      type: <String>,
+   *      carrier: <String>
+   *    },
+   *    photo: <Blob>
+   *   }
+   * }
    */
-  _getGroupObject: function rdbm_getGroupObject(group) {
+  _getGroupObject: function getGroupObject(group) {
     if (!Array.isArray(group.id) || group.id.length < 3) {
       return null;
+    }
+
+    var contact;
+    if (group.contactId) {
+      contact = {
+        id: group.contactId,
+        primaryInfo: group.contactPrimaryInfo,
+        matchingTel: {
+          number: group.id[1],
+          type: group.contactMatchingTelType,
+          carrier: group.contactMatchingTelCarrier
+        },
+        photo: group.contactPhoto
+      };
     }
 
     return {
@@ -315,7 +467,8 @@ var CallLogDBManager = {
       type: group.id[2],
       status: group.id[3] || undefined,
       lastEntryDate: group.lastEntryDate,
-      retryCount: group.retryCount
+      retryCount: group.retryCount,
+      contact: contact
     };
   },
   /**
@@ -334,7 +487,7 @@ var CallLogDBManager = {
    * return (via callback) the object representing the group where the call
    *                       belongs to or an error message if needed.
    */
-  add: function rdbm_add(recentCall, callback) {
+  add: function add(recentCall, callback) {
     if (typeof recentCall !== 'object') {
       callback('INVALID_CALL');
       return;
@@ -344,9 +497,7 @@ var CallLogDBManager = {
     this._newTxn('readwrite', [this._dbRecentsStore, this._dbGroupsStore],
                  function(error, txn, stores) {
       if (error) {
-        if (callback && callback instanceof Function) {
-          callback(error);
-        }
+        self._asyncReturn(callback, error);
         return;
       }
 
@@ -358,7 +509,7 @@ var CallLogDBManager = {
       // For adding a call to the database we first create or update its
       // corresponding group and then we store the actual call adding the id
       // of the group where it belongs.
-      groupsStore.get(groupId).onsuccess = function() {
+      groupsStore.get(groupId).onsuccess = function onsuccess() {
         var group = this.result;
         if (group) {
           // Groups should have the date of the newest call.
@@ -366,21 +517,54 @@ var CallLogDBManager = {
             group.lastEntryDate = recentCall.date;
           }
           group.retryCount++;
-          groupsStore.put(group);
+          groupsStore.put(group).onsuccess = function onsuccess() {
+            self._asyncReturn(callback, self._getGroupObject(group));
+          };
         } else {
-          group = {
+           group = {
             id: groupId,
+            number: recentCall.number,
             lastEntryDate: recentCall.date,
             retryCount: 1
           };
-          groupsStore.add(group);
+          Contacts.findByNumber(recentCall.number,
+                                function(contact, matchingTel) {
+            if (contact && contact !== null) {
+              group.contactId = contact.id;
+              if (Array.isArray(contact.photo) && contact.photo[0]) {
+                group.contactPhoto = contact.photo[0];
+              }
+              if (matchingTel) {
+                var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel,
+                                                                  contact);
+                if (Array.isArray(primaryInfo)) {
+                  primaryInfo = primaryInfo[0];
+                }
+                group.contactPrimaryInfo = String(primaryInfo);
+
+                if (Array.isArray(matchingTel.type) && matchingTel.type[0]) {
+                  group.contactMatchingTelType = String(matchingTel.type[0]);
+                } else {
+                  group.contactMatchingTelType = String(matchingTel.type);
+                }
+
+                if (matchingTel.carrier) {
+                  group.contactMatchingTelCarrier = String(matchingTel.carrier);
+                }
+              }
+            }
+
+            self._newTxn('readwrite', [self._dbGroupsStore],
+                         function(error, txn, store) {
+              store.add(group).onsuccess = function onsuccess() {
+                self._asyncReturn(callback, self._getGroupObject(group));
+              };
+            });
+          });
         }
+
         recentCall.groupId = groupId;
-        recentsStore.put(recentCall).onsuccess = function() {
-          if (callback && callback instanceof Function) {
-            callback(self._getGroupObject(group));
-          }
-        };
+        recentsStore.put(recentCall);
       };
     });
   },
@@ -392,7 +576,7 @@ var CallLogDBManager = {
    *
    * return (via callback) count of deleted calls or error if needed.
    */
-  deleteGroup: function rdbm_deleteGroup(group, callback) {
+  deleteGroup: function deleteGroup(group, callback) {
     // Valid group doesn't need to contain number, we can receive
     // calls from unknown or hidden numbers as well
     if (!group || typeof group !== 'object' || !group.date || !group.type) {
@@ -400,38 +584,36 @@ var CallLogDBManager = {
       return;
     }
 
+    var self = this;
+
     this._newTxn('readwrite', [this._dbGroupsStore, this._dbRecentsStore],
-                 (function(error, txn, stores) {
+                 function(error, txn, stores) {
       if (error) {
-        if (callback && callback instanceof Function) {
-          callback(error);
-        }
+        self._asyncReturn(callback, error);
         return;
       }
 
       var groupsStore = stores[0];
       var recentsStore = stores[1];
 
-      var groupId = this._getGroupId(group);
+      var groupId = self._getGroupId(group);
 
       // We delete the given group and all its corresponding calls.
-      groupsStore.delete(groupId).onsuccess = function() {
+      groupsStore.delete(groupId).onsuccess = function onsuccess() {
         var deleted = 0;
         recentsStore.index('groupId').openCursor(groupId)
-                    .onsuccess = function(event) {
+                    .onsuccess = function onsuccess(event) {
           var cursor = event.target.result;
           if (cursor) {
             cursor.delete();
             deleted++;
             cursor.continue();
           } else {
-            if (callback && callback instanceof Function) {
-              callback(deleted);
-            }
+            self._asyncReturn(callback, deleted);
           }
         };
       };
-    }).bind(this));
+    });
   },
   /**
    * Delete a list of groups of calls and all its belonging calls.
@@ -442,30 +624,26 @@ var CallLogDBManager = {
    * return (via callback) count of deleted calls or an error message if
    *                       needed.
    */
-  deleteGroupList: function rdbm_deleteGroupList(groupList, callback) {
+  deleteGroupList: function deleteGroupList(groupList, callback) {
     var deleted = 0;
     if (groupList.length > 0) {
       var itemToDelete = groupList.pop();
       if (typeof itemToDelete !== 'object') {
-        callback('INVALID_GROUP_IN_LIST');
+        this._asyncReturn(callback, 'INVALID_GROUP_IN_LIST');
         return;
       }
       this.deleteGroup(itemToDelete, (function(result) {
         // We expect a number. Otherwise that means that we got an error
         // message.
         if (typeof result !== 'number') {
-          if (callback && callback instanceof Function) {
-            callback(result);
-          }
+          this._asyncReturn(callback, result);
           return;
         }
         deleted += result;
         this.deleteGroupList(groupList, callback);
       }).bind(this));
     } else {
-      if (callback && callback instanceof Function) {
-        callback(deleted);
-      }
+      this._asyncReturn(callback, deleted);
     }
   },
   /**
@@ -476,27 +654,24 @@ var CallLogDBManager = {
    *
    * return (via callback) error message if needed.
    */
-  deleteAll: function rdbm_deleteAll(callback) {
+  deleteAll: function deleteAll(callback) {
+    var self = this;
     this._newTxn('readwrite', [this._dbRecentsStore, this._dbGroupsStore],
-                 (function(error, txn, stores) {
+                 function(error, txn, stores) {
       if (error) {
-        if (callback instanceof Function) {
-          callback(error);
-        }
+        self._asyncReturn(callback, error);
         return;
       }
 
       var recentsStore = stores[0];
       var groupsStore = stores[1];
 
-      recentsStore.clear().onsuccess = function() {
-        groupsStore.clear().onsuccess = function() {
-          if (callback && callback instanceof Function) {
-            callback();
-          }
+      recentsStore.clear().onsuccess = function onsuccess() {
+        groupsStore.clear().onsuccess = function onsuccess() {
+          self._asyncReturn(callback);
         };
       };
-    }).bind(this));
+    });
   },
   /**
    * Delete the storaged database file.
@@ -504,7 +679,7 @@ var CallLogDBManager = {
    * param callback
    *        Function to be called after the deletion of the database.
    */
-  deleteDb: function rdbm_deleteDb(callback) {
+  deleteDb: function _deleteDb(callback) {
     var indexedDB = window.indexedDB || window.webkitIndexedDB ||
                     window.mozIndexedDB || window.msIndexedDB;
     if (!indexedDB) {
@@ -512,11 +687,9 @@ var CallLogDBManager = {
       return;
     }
     indexedDB.deleteDatabase(this._dbName, this._dbVersion)
-             .onsuccess = function() {
-      if (callback) {
-        callback();
-      }
-    };
+             .onsuccess = (function onsuccess() {
+      this._asyncReturn(callback);
+    }).bind(this);
   },
   /**
    * Helper for getting a list of all the records stored in a given object
@@ -541,38 +714,43 @@ var CallLogDBManager = {
    * return (via callback) the whole list of requested records, a cursor or an
    *                        error message if needed.
    */
-  _getList: function rdbm_getList(storeName, callback, sortedBy, prev,
-                                  getCursor, limit) {
+  _getList: function getList(storeName, callback, sortedBy, prev,
+                             getCursor, limit) {
+    if (!callback || !callback instanceof Function) {
+      return;
+    }
+
     var self = this;
     this._newTxn('readonly', [storeName], function(error, txn, store) {
       if (error) {
-        if (callback && callback instanceof Function) {
-          callback(error);
-        }
+        callback(error);
         return;
       }
 
       var cursor = null;
       var direction = prev ? 'prev' : 'next';
       if (sortedBy && sortedBy !== null) {
+        if (!store.indexNames.contains(sortedBy) && sortedBy != "id") {
+          callback('INVALID_SORTED_BY_KEY');
+          txn.abort();
+          return;
+        }
         cursor = store.index(sortedBy).openCursor(null, direction);
       } else {
         cursor = store.openCursor(null, direction);
       }
       var result = [];
-      cursor.onsuccess = function(event) {
+      cursor.onsuccess = function onsuccess(event) {
         var item = event.target.result;
 
         if (item && getCursor) {
-          if (callback && callback instanceof Function) {
-            if (storeName === self._dbGroupsStore) {
-              callback({
-                value: self._getGroupObject(item.value),
-                continue: function() { return item.continue(); }
-              });
-            } else {
-              callback(item);
-            }
+          if (storeName === self._dbGroupsStore) {
+            callback({
+              value: self._getGroupObject(item.value),
+              continue: function() { return item.continue(); }
+            });
+          } else {
+            callback(item);
           }
           return;
         }
@@ -588,15 +766,11 @@ var CallLogDBManager = {
           }
           item.continue();
         } else {
-          if (callback && callback instanceof Function) {
-            callback(result);
-          }
+          callback(result);
         }
       };
-      cursor.onerror = function(event) {
-        if (callback && callback instanceof Function) {
-          callback(event.target.error.name);
-        }
+      cursor.onerror = function onerror(event) {
+        callback(event.target.error.name);
       };
     });
   },
@@ -620,8 +794,8 @@ var CallLogDBManager = {
    * return (via callback) the whole list of recent calls, a cursor or an
    *                        error message if needed.
    */
-  getRecentList: function rdbm_getRecentList(callback, sortedBy, prev,
-                                             getCursor, limit) {
+  getRecentList: function getRecentList(callback, sortedBy, prev,
+                                        getCursor, limit) {
     this._getList(this._dbRecentsStore, callback, sortedBy, prev, getCursor,
                   limit);
   },
@@ -645,8 +819,8 @@ var CallLogDBManager = {
    * return (via callback) the whole list of groups, a cursor or an error
    *                        message if needed.
    */
-  getGroupList: function rdbm_getGroupList(callback, sortedBy, prev,
-                                           getCursor, limit) {
+  getGroupList: function getGroupList(callback, sortedBy, prev,
+                                      getCursor, limit) {
     // The primary key of the groups object store contains the 'number', 'type'
     // and 'status' fields.
     if (sortedBy === 'number' || sortedBy === 'type' || sortedBy === 'status') {
@@ -666,102 +840,314 @@ var CallLogDBManager = {
    *
    * return (via callback) the last group or an error message if needed.
    */
-  getLastGroup: function rdbm_getLastGroup(callback, sortedBy) {
+  getLastGroup: function getLastGroup(callback, sortedBy) {
+    if (!callback || !callback instanceof Function) {
+      return;
+    }
+
     var self = this;
     this._newTxn('readonly', this._dbGroupsStore,
                  function(error, txn, store) {
       if (error) {
-        if (callback && callback instanceof Function) {
-          callback(error);
-        }
+        callback(error);
         return;
       }
 
       try {
         var request = null;
         if (sortedBy && sortedBy !== null) {
+          if (!store.indexNames.contains(sortedBy) && sortedBy != "id") {
+            callback('INVALID_SORTED_BY_KEY');
+            txn.abort();
+            return;
+          }
           request = store.index(sortedBy).openCursor(null, 'prev');
         } else {
           request = store.openCursor(null, 'prev');
         }
-        request.onsuccess = function(event) {
-          if (callback && callback instanceof Function) {
-            var result = event.target.result;
-            if (result) {
-              callback(self._getGroupObject(result.value));
-            } else {
-              callback(null);
-            }
+        request.onsuccess = function onsuccess(event) {
+          var result = event.target.result;
+          if (result) {
+            callback(self._getGroupObject(result.value));
+          } else {
+            callback(null);
           }
         };
-        request.onerror = function(event) {
-          if (callback && callback instanceof Function) {
-            callback(event.target.error.name);
-          }
+        request.onerror = function onerror(event) {
+          callback(event.target.error.name);
         };
       } catch (e) {
-        if (callback && callback instanceof Function) {
-          callback(e);
-        }
+        callback(e);
       }
     });
   },
-
-  //**************************************************************************
-  // TODO: This methods are only kept as a temporary meassure for not breaking
-  //       the call log until bug 847406 lands.
-  //**************************************************************************
-
-  init: function DELETEMEPLEASE_init(callback) {
-    callback();
-  },
-  get: function DELETEMEPLEASE_get(callback) {
-    this.getRecentList(callback, null, true);
-  },
-  delete: function DELETEMEPLEASE_delete(date, callback) {
-    var self = this;
-    this._newTxn('readwrite', [this._dbRecentsStore],
-                 function(error, txn, store) {
-      var delRequest = store.delete(date);
-
-      delRequest.onsuccess = function de_onsuccess() {
-        if (callback && callback instanceof Function) {
-          callback();
-        }
-      };
-
-      delRequest.onerror = function de_onsuccess(e) {
-        console.log('recents_db delete item failure: ',
-            e.message, delRequest.errorCode);
-      };
-    });
-  },
-  deleteList: function DELETEMEPLEASE_deleteList(list, callback) {
-    if (list.length > 0) {
-      var itemToDelete = list.pop();
-      var self = this;
-      this.delete(itemToDelete, function() {
-        self.deleteList(list, callback);
-      });
-    } else {
-      if (callback) {
-        callback();
-      }
+  /**
+   * Get the call with the most recent date.
+   *
+   * param callback
+   *        Function to be called with the last call or an error message if
+   *        needed.
+   *
+   * return (via callback) the last call or an error message if needed.
+   */
+  getLastCall: function getLastCall(callback) {
+    if (!callback || !callback instanceof Function) {
+      return;
     }
-  },
-  getLast: function DELETEMEPLEASE_getLast(callback) {
+
     this._newTxn('readonly', [this._dbRecentsStore],
                  function(error, txn, store) {
+      if (error) {
+        callback(error);
+        return;
+      }
+
       var cursor = store.openCursor(null, 'prev');
-      cursor.onsuccess = function(event) {
+      cursor.onsuccess = function onsuccess(event) {
         var item = event.target.result;
-        if (item) {
+        if (item && item.value) {
           callback(item.value);
+        } else {
+          callback(null);
         }
       };
+      cursor.onerror = function onerror(event) {
+        callback(event.target.error.name);
+      };
+    });
+  },
+  /**
+   * We store a revision number for the contacts data local cache that we need
+   * to keep synced with the Contacts API database.
+   * This method stores the revision of the Contacts API database and it will
+   * be called after refresing the local cache because of a contact updated, a
+   * contact deletion or a cache sync.
+   */
+  _updateCacheRevision: function _updateCacheRevision() {
+    Contacts.getRevision(function(contactsRevision) {
+      if (contactsRevision) {
+        window.asyncStorage.setItem('contactCacheRevision',
+                                    contactsRevision);
+      }
+    });
+  },
+  /**
+   * Updates the records from the groups object store with a given contact
+   * information.
+   * This function will likely be called within the handlers of the
+   * 'oncontactchange' event.
+   *
+   * param contact
+   *        Contact object
+   * param callback
+   *        Function to be called after updating the group or when an error
+   *        is found.
+   *
+   * return (via callback) count of affected records or an error message if
+   *                       needed.
+   */
+  updateGroupContactInfo: function updateGroupContactInfo(contact,
+                                                          matchingTel,
+                                                          callback) {
+    var self = this;
+    this._newTxn('readwrite', [this._dbGroupsStore],
+                 function(error, txn, store) {
+      if (error) {
+        self._asyncReturn(callback, error);
+        return;
+      } else if (!contact) {
+        self._asyncReturn(callback, 0);
+        return;
+      }
+      var count = 0;
+      var req = store.index('number')
+                     .openCursor(IDBKeyRange.only(matchingTel.value));
+      req.onsuccess = function onsuccess(event) {
+        var cursor = event.target.result;
+        if (cursor && cursor.value) {
+          var group = cursor.value;
+          group.contactId = contact.id;
+          if (Array.isArray(contact.photo) && contact.photo[0]) {
+            group.contactPhoto = contact.photo[0];
+          }
+          if (matchingTel) {
+            var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel,
+                                                              contact);
+            if (Array.isArray(primaryInfo) && primaryInfo[0]) {
+              primaryInfo = primaryInfo[0];
+            }
+            group.contactPrimaryInfo = String(primaryInfo);
+            if (Array.isArray(matchingTel.type) && matchingTel.type[0]) {
+              group.contactMatchingTelType = String(matchingTel.type[0]);
+            }
+            if (matchingTel.carrier) {
+              group.contactMatchingTelCarrier = String(matchingTel.carrier);
+            }
+          }
+          cursor.update(group);
+          count++;
+          cursor.continue();
+        } else {
+          self._asyncReturn(callback, count);
+          self._updateCacheRevision();
+        }
+      };
+      req.onerror = function onerror(event) {
+        self._asyncReturn(callback, event.target.error.name);
+      };
+    });
+  },
+  /**
+   * Removes the contact information matching the given contact id from the
+   * list of groups or the contact information from a specific group.
+   *
+   * This function will likely be called within the handlers of the
+   * 'oncontactchange' event.
+   *
+   * param contactId
+   *        Contact identifier to be removed from the DB.
+   * param group
+   *        Group object to remove the contact info from.
+   * param callback
+   *        Function to be called after updating the group or when an error
+   *        is found.
+   *
+   * return (via callback) count of affected records or an error message if
+   *                       needed.
+   */
+  removeGroupContactInfo: function removeGroupContactInfo(contactId,
+                                                          group,
+                                                          callback) {
+    if (!contactId && !group) {
+      this._asyncReturn(callback, 0);
+      return;
+    }
 
-      cursor.onerror = function(e) {
-        console.log('recents_db get failure: ', e.message);
+    var self = this;
+
+    this._newTxn('readwrite', [this._dbGroupsStore],
+                 function(error, txn, store) {
+      if (error) {
+        self._asyncReturn(callback, error);
+        callback(error);
+        return;
+      }
+
+      var count = 0;
+
+      var req;
+      if (contactId) {
+        req = store.index('contactId').openCursor(contactId);
+      } else if (group) {
+        var groupId = self._getGroupId(group);
+        req = store.openCursor(groupId);
+      }
+      req.onsuccess = function onsuccess(event) {
+        var cursor = event.target.result;
+        if (cursor) {
+          var group = cursor.value;
+          if (group.contactId) {
+            delete group.contactId;
+          }
+          if (group.contactPrimaryInfo) {
+            delete group.contactPrimaryInfo;
+          }
+          if (group.contactMatchingTelType) {
+            delete group.contactMatchingTelType;
+          }
+          if (group.contactMatchingTelCarrier) {
+            delete group.contactMatchingTelCarrier;
+          }
+          if (group.contactPhoto) {
+            delete group.contactPhoto;
+          }
+          cursor.update(group);
+          count++;
+          cursor.continue();
+        } else {
+          self._asyncReturn(callback, count);
+          self._updateCacheRevision();
+        }
+      };
+      req.onerror = function onerror(event) {
+        self._asyncReturn(callback, event.target.error.name);
+      };
+    });
+  },
+  invalidateContactsCache: function invalidateContactsCache(callback) {
+    var self = this;
+    this._newTxn('readonly', [this._dbGroupsStore],
+                  function(error, txn, store) {
+      if (error) {
+        self._asyncReturn(callback, error);
+        return;
+      }
+
+      var waitForAsyncCall = 0;
+      var cursorDone = false;
+
+      var req = store.openCursor();
+      req.onsuccess = function onsuccess(event) {
+        var cursor = event.target.result;
+        if (cursor) {
+          var group = cursor.value;
+          waitForAsyncCall++;
+          Contacts.findByNumber(group.number, function(contact, matchingTel) {
+            waitForAsyncCall--;
+            if(!contact && !matchingTel) {
+              if (group.contactId) {
+                delete group.contactId;
+              }
+              if (group.contactPhoto) {
+                delete group.contactPhoto;
+              }
+              if (group.contactPrimaryInfo) {
+                delete group.contactPrimaryInfo;
+              }
+              if (group.contactMatchingTelType) {
+                delete group.contactMatchingTelType;
+              }
+              if (group.contactMatchingTelCarrier) {
+                delete group.contactMatchingTelCarrier;
+              }
+            } else {
+              group.contactId = contact.id;
+              if (Array.isArray(contact.photo) && contact.photo[0]) {
+                group.contactPhoto = contact.photo[0];
+              }
+
+              var primaryInfo = Utils.getPhoneNumberPrimaryInfo(matchingTel,
+                                                                contact);
+              if (Array.isArray(primaryInfo) && primaryInfo[0]) {
+                primaryInfo = primaryInfo[0];
+              }
+              group.contactPrimaryInfo = String(primaryInfo);
+              if (Array.isArray(matchingTel.type) && matchingTel.type[0]) {
+                group.contactMatchingTelType = String(matchingTel.type[0]);
+              }
+              if (matchingTel.carrier) {
+                group.contactMatchingTelCarrier = String(matchingTel.carrier);
+              }
+            }
+            self._newTxn('readwrite', [self._dbGroupsStore],
+                         function(error, txn, store) {
+              if (error) {
+                return;
+              }
+              store.put(group);
+            });
+            if (cursorDone && !waitForAsyncCall) {
+              self._asyncReturn(callback);
+              self._updateCacheRevision();
+            }
+          });
+          cursor.continue();
+        } else {
+          cursorDone = true;
+        }
+      };
+      req.onerror = function onerror(event) {
+        self._asyncReturn(callback, event.target.error.name);
       };
     });
   }

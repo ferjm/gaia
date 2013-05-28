@@ -142,8 +142,7 @@ HandledCall.prototype.updateCallNumber = function hc_updateCallNumber() {
           });
         }
         KeypadManager.formatPhoneNumber('end', true);
-        var additionalInfo =
-          Utils.getPhoneNumberAdditionalInfo(matchingTel, contact, number);
+        var additionalInfo = Utils.getPhoneNumberAdditionalInfo(matchingTel);
         KeypadManager.updateAdditionalContactInfo(additionalInfo);
         if (contact.photo && contact.photo.length > 0) {
           self.photo = contact.photo[0];
