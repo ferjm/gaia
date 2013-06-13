@@ -7,6 +7,8 @@ var CallLogDBManager = {
   _dbGroupsStore: 'dialerGroups',
   _dbVersion: 4,
   _observers: {},
+  _maxNumberOfGroups: 10,
+  _numberOfGroupsToDelete: 2,
 
   /**
    * Add a observer of the 'upgradeneeded' event, which is fired as soon as the
@@ -472,6 +474,38 @@ var CallLogDBManager = {
     };
   },
   /**
+   * Ensures that the DB size is not bigger than _maxNumberOfGroups. If the DB
+   * is fat enough, we delete the number of groups higher than
+   * _maxNumberOfGroups (most likely 1) plus _numberOfGroupsToDelete to make
+   * some extra space.
+   */
+  _keepDbPrettyAndFit: function _keepDbPrettyAndFit() {
+    var self = this;
+    this._newTxn('readonly', this._dbGroupsStore, function(error, txn, store) {
+      if (error) {
+        return;
+      }
+
+      var req = store.count();
+      req.onsuccess = function() {
+        var groupsToDelete = req.result - self._maxNumberOfGroups;
+        if (groupsToDelete > 0) {
+          groupsToDelete += self._numberOfGroupsToDelete;
+          var cursorReq = store.index('lastEntryDate').openCursor();
+          cursorReq.onsuccess = function() {
+            var cursor = cursorReq.result;
+            if (!cursor || !groupsToDelete) {
+              return;
+            }
+            groupsToDelete--;
+            self.deleteGroup(null, cursor.value.id);
+            cursor.continue();
+          };
+        }
+      };
+    });
+  },
+  /**
    * Stores a new call in the database.
    *
    * param recentCall
@@ -558,6 +592,9 @@ var CallLogDBManager = {
                          function(error, txn, store) {
               store.add(group).onsuccess = function onsuccess() {
                 self._asyncReturn(callback, self._getGroupObject(group));
+                // Once the group was successfully added, we check that the db
+                // size is below the max size set.
+                self._keepDbPrettyAndFit();
               };
             });
           });
@@ -573,14 +610,18 @@ var CallLogDBManager = {
    *
    * param group
    *        Group object to be deleted.
+   * param groupId
+   *        Identifier of the group to be deleted. We expect a group object or
+   *        its identifier.
    *
    * return (via callback) count of deleted calls or error if needed.
    */
-  deleteGroup: function deleteGroup(group, callback) {
+  deleteGroup: function deleteGroup(group, groupId, callback) {
     // Valid group doesn't need to contain number, we can receive
     // calls from unknown or hidden numbers as well
-    if (!group || typeof group !== 'object' || !group.date || !group.type) {
-      callback('NOT_VALID_GROUP');
+    if (!groupId &&
+        (!group || typeof group !== 'object' || !group.date || !group.type)) {
+      this._asyncReturn(callback, 'NOT_VALID_GROUP');
       return;
     }
 
@@ -596,7 +637,9 @@ var CallLogDBManager = {
       var groupsStore = stores[0];
       var recentsStore = stores[1];
 
-      var groupId = self._getGroupId(group);
+      if (!groupId) {
+        groupId = self._getGroupId(group);
+      }
 
       // We delete the given group and all its corresponding calls.
       groupsStore.delete(groupId).onsuccess = function onsuccess() {
@@ -906,6 +949,14 @@ var CallLogDBManager = {
       };
     });
   },
+
+  /************************************************************************
+   * Contacts related functionality.
+   *
+   * The call log database keeps a local cache of the Contacts API database
+   * in order to provide the contacts information as fast as possible.
+   ***********************************************************************/
+
   /**
    * We store a revision number for the contacts data local cache that we need
    * to keep synced with the Contacts API database.

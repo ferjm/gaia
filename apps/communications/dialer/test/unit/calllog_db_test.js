@@ -18,7 +18,7 @@ suite('dialer/call_log_db', function() {
   // According to mock_contacts.js, 123 will have an associated test contact
   // 111 will have no contact associated and 222 will have more than 1 contact
   // for that number.
-  var numbers = ['123', '111', '222'];
+  var numbers = ['123', '111', '222', '333'];
   var now = Date.now();
   var days = [// Day 1
               now,
@@ -667,7 +667,7 @@ suite('dialer/call_log_db', function() {
     test('Add a call', function(done) {
       CallLogDBManager.add(call, function(group) {
         checkGroup(group, call, call.date, 1, true);
-        CallLogDBManager.deleteGroup(group, function(result) {
+        CallLogDBManager.deleteGroup(group, null, function(result) {
           assert.equal(result, 1);
           done();
         });
@@ -694,7 +694,7 @@ suite('dialer/call_log_db', function() {
 
     test('Add another call', function(done) {
       CallLogDBManager.add(call2, function(group) {
-        CallLogDBManager.deleteGroup(group, function(result) {
+        CallLogDBManager.deleteGroup(group, null, function(result) {
           assert.equal(result, 2);
           done();
         });
@@ -711,11 +711,63 @@ suite('dialer/call_log_db', function() {
     test('Add a call', function(done) {
       CallLogDBManager.add(call, function(group) {
         checkGroup(group, call, call.date, 1, false);
-        CallLogDBManager.deleteGroup(group, function(result) {
+        CallLogDBManager.deleteGroup(group, null, function(result) {
           assert.equal(result, 1);
           done();
         });
       });
+    });
+  });
+
+  suite('Keep DB fit', function() {
+    var call = {
+      number: numbers[0],
+      type: 'incoming',
+      date: days[0]
+    };
+
+    var call2 = {
+      number: numbers[1],
+      type: 'incoming',
+      date: days[1]
+    };
+
+    var call3 = {
+      number: numbers[2],
+      type: 'incoming',
+      date: days[2]
+    };
+
+    var call4 = {
+      number: numbers[3],
+      type: 'incoming',
+      date: days[2]
+    };
+
+    suiteSetup(function() {
+      CallLogDBManager._maxNumberOfGroups = 3;
+      CallLogDBManager._numberOfGroupsToDelete = 2;
+    });
+
+    test('Add all calls', function(done) {
+      CallLogDBManager.add(call, function() {
+        CallLogDBManager.add(call2, function() {
+          CallLogDBManager.add(call3, function() {
+            CallLogDBManager.add(call4, function() {
+              done();
+            });
+          });
+        });
+      });
+    });
+
+    test('Get count of groups', function(done) {
+      setTimeout(function() {
+        CallLogDBManager.getGroupList(function(groups) {
+          assert.length(groups, 1);
+          done();
+        });
+      }, 1000);
     });
   });
 
