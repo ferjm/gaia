@@ -148,7 +148,7 @@ a {
 .step-state:before {
   content: "";
   height: 0.3rem;
-  width: calc(100% / 8);
+  width: calc(100% / 9);
   position: absolute;
   top: 50%;
   left: 0;
@@ -192,6 +192,10 @@ a {
 
 .step-8.step-state:before {
   transform: translateX(700%);
+}
+
+.step-9.step-state:before {
+  transform: translateX(800%);
 }
 
 /*

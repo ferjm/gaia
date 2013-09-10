@@ -82,7 +82,9 @@ var UIManager = {
     'newsletter-input',
     'newsletter-success-screen',
     'offline-newsletter-error-dialog',
-    'invalid-email-error-dialog'
+    'invalid-email-error-dialog',
+    // Persona
+    'persona-sign-in'
   ],
 
   init: function ui_init() {
@@ -201,6 +203,8 @@ var UIManager = {
     var button = this.offlineErrorDialog.querySelector('button');
     button.addEventListener('click',
                             this.onOfflineDialogButtonClick.bind(this));
+
+    this.personaSignIn.addEventListener('click', Persona.onSignInClick);
   },
 
   sendNewsletter: function ui_sendNewsletter(callback) {

@@ -61,11 +61,21 @@ var TrustedUIManager = {
   open: function trui_open(name, frame, chromeEventId, onCancelCB) {
     screen.mozLockOrientation('portrait');
     this._hideAllFrames();
+
+    if (FtuLauncher.isFtuRunning()) {
+      if (this.currentStack.length) {
+        this._makeDialogHidden(this._getTopDialog());
+      }
+      this._pushNewDialog(name, frame, chromeEventId, onCancelCB, true);
+      return;
+    }
+
     if (this.currentStack.length) {
       this._makeDialogHidden(this._getTopDialog());
       this._pushNewDialog(name, frame, chromeEventId, onCancelCB);
     } else {
-      // first time, spin back to home screen first
+      // First time for the app, if it is not the FTU, spin back to home screen
+      // first.
       this.popupContainer.classList.add('up');
       this.popupContainer.classList.remove('closing');
       this._hideCallerApp(this._lastDisplayedApp, function openTrustedUI() {
@@ -80,7 +90,6 @@ var TrustedUIManager = {
                              this.currentStack.length;
 
     this._restoreOrientation();
-
     if (callback)
       callback();
 
@@ -199,14 +208,14 @@ var TrustedUIManager = {
   },
 
   _pushNewDialog: function trui_PushNewDialog(name, frame, chromeEventId,
-                                              onCancelCB) {
-    // add some data attributes to the frame
+                                              onCancelCB, fullscreenMode) {
+    // Add some data attributes to the frame.
     var dataset = frame.dataset;
     dataset.frameType = 'popup';
     dataset.frameName = frame.name;
     dataset.frameOrigin = this._lastDisplayedApp;
 
-    // make a shiny new dialog object
+    // Make a shiny new dialog object.
     var dialog = {
       name: name,
       frame: frame,
@@ -214,19 +223,22 @@ var TrustedUIManager = {
       onCancelCB: onCancelCB
     };
 
-    // push and show
+    // Push and show.
     this.currentStack.push(dialog);
     this.dialogTitle.textContent = dialog.name;
     this.container.appendChild(dialog.frame);
-    this._makeDialogVisible(dialog);
+    this._makeDialogVisible(dialog, fullscreenMode);
   },
 
-  _makeDialogVisible: function trui_makeDialogVisible(dialog) {
-    // make sure the trusty ui is visible
+  _makeDialogVisible: function trui_makeDialogVisible(dialog, fullscreenMode) {
+    fullscreenMode ? this.popupContainerInner.classList.add('fullscreen') :
+                     this.popupContainerInner.classList.remove('fullscreen');
+
+    // Make sure the trusty ui is visible.
     this.popupContainer.classList.remove('closing');
     this._show();
 
-    // ensure the frame is visible and the dialog title is correct.
+    // Ensure the frame is visible and the dialog title is correct.
     dialog.frame.classList.add('selected');
     this.dialogTitle.textContent = dialog.name;
   },
