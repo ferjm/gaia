@@ -33,6 +33,12 @@ var TrustedUIManager = {
 
   closeButton: document.getElementById('trustedui-close'),
 
+  errorTitle: document.getElementById('trustedui-error-title'),
+
+  errorMessage: document.getElementById('trustedui-error-message'),
+
+  errorClose: document.getElementById('trustedui-error-close'),
+
   hasTrustedUI: function trui_hasTrustedUI(origin) {
     return (this._dialogStacks[origin] && this._dialogStacks[origin].length);
   },
@@ -53,9 +59,8 @@ var TrustedUIManager = {
     window.addEventListener('appterminated', this);
     window.addEventListener('keyboardhide', this);
     window.addEventListener('keyboardchange', this);
-    window.addEventListener('mozbrowserloadstart', this);
-    window.addEventListener('mozbrowserloadend', this);
     this.closeButton.addEventListener('click', this);
+    this.errorClose.addEventListener('click', this);
   },
 
   open: function trui_open(name, frame, chromeEventId, onCancelCB) {
@@ -216,6 +221,15 @@ var TrustedUIManager = {
     dataset.frameName = frame.name;
     dataset.frameOrigin = this._lastDisplayedApp;
 
+    frame.addEventListener('mozbrowserloadstart',
+                           this.handleBrowserEvents.bind(this));
+    frame.addEventListener('mozbrowserloadend',
+                           this.handleBrowserEvents.bind(this));
+    frame.addEventListener('mozbrowsererror',
+                           this.handleBrowserEvents.bind(this));
+    frame.addEventListener('mozbrowserclose',
+                           this.handleBrowserEvents.bind(this));
+
     // make a shiny new dialog object
     var dialog = {
       name: name,
@@ -325,17 +339,36 @@ var TrustedUIManager = {
     }
   },
 
+  _showError: function trui_showError(errorProperty) {
+    var dialog = this._getTopDialog();
+    var frame = dialog.frame;
+    if (!('error' in frame.dataset)) {
+      this.container.classList.remove('error');
+      return;
+    }
+
+    var name = dialog.name;
+    var _ = navigator.mozL10n.get;
+
+    this.errorTitle.textContent = _('error-title', {name: name});
+    this.errorMessage.textContent = _(errorProperty, {name: name});
+
+    this.container.classList.add('error');
+  },
+
   handleEvent: function trui_handleEvent(evt) {
+    dump('trusted_ui: handleEvent: ' + evt.type + '\n');
     switch (evt.type) {
       case 'home':
       case 'holdhome':
-        if (!this.isVisible())
+        if (!this.isVisible()) {
           return;
-
+        }
         this._hideTrustedApp();
         break;
       case 'click':
-        // Close-button clicked
+        // cancel button or error close button
+        this.container.classList.remove('error');
         this._destroyDialog();
         break;
       case 'appterminated':
@@ -377,15 +410,28 @@ var TrustedUIManager = {
       case 'keyboardhide':
         this._setHeight(window.innerHeight - StatusBar.height);
         break;
+    }
+  },
+
+  handleBrowserEvents: function handleBrowserEvents(evt) {
+    switch (evt.type) {
       case 'mozbrowserloadstart':
         this.throbber.classList.add('loading');
         break;
       case 'mozbrowserloadend':
         this.throbber.classList.remove('loading');
         break;
+      case 'mozbrowsererror':
+        this._getTopDialog().frame.dataset.error = true;
+        this._showError('crash-banner-app');
+        break;
+      case 'mozbrowserclose':
+        // window.close
+        this.container.classList.remove('error');
+        this._destroyDialog();
+        break;
     }
   }
-
 };
 
 TrustedUIManager.init();
