@@ -53,7 +53,7 @@ var FxaModuleUI = {
 
         }
       }
-      // this.progress(100 * (index + 1) / this.maxSteps);
+      this.progress(100 * (index + 1) / this.maxSteps);
       callback && callback();
 
 
