@@ -74,17 +74,16 @@ var FxAccountsManager = {
         });
         break;
       case 'openFlow':
-        LazyLoader.load('js/fxa_ui.js', function() {
-          FxAccountsUI.openFlow(null, null, _successCb, _errorCb);
-        });
+        FxUI.login(_successCb, _errorCb);
         break;
       case 'logout':
+
+        break;
       case 'delete':
+
+        break;
       case 'changePassword':
-        LazyLoader.load('js/fxa_ui.js', function() {
-          FxAccountsUI.openFlow(message.name, message.accountId,
-                                _successCb, _errorCb);
-        });
+
         break;
     }
   },

@@ -16,3 +16,11 @@ body {
   */
   overflow: hidden;
 }
+
+button {
+  display: block;
+  width: 100%;
+  /*height: 3rem;*/
+  line-height: 3rem;
+  font-size: 1.6rem;
+}

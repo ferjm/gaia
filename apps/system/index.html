@@ -238,6 +238,10 @@
     <!-- Identity -->
     <script defer src="js/identity.js"></script>
 
+    <!-- Fx Accounts -->
+    <link rel="stylesheet" type="text/css" href="style/firefox_account/firefox_account_container.css">
+    <script defer src="js/fxa_ui.js"></script>
+
     <!-- Operator Variant Mechanism -->
     <script defer src="shared/js/operator_variant_helper.js"></script>
     <script defer src="js/operator_variant/operator_variant.js"></script>
@@ -301,9 +305,8 @@
     <link rel="stylesheet" type="text/css" href="style/storage_watcher/storage_watcher.css">
 
     <!-- Firefox Accounts-->
-    <script src="js/fxa_manager.js"></script>
-    <link rel="stylesheet" type="text/css" href="style/fxa/fxa.css">
-
+    <script defer src="js/fxa_manager.js"></script>
+    
     <style>
       /* initlogos style is here to prevent flashing */
 
@@ -680,6 +683,9 @@
           </div>
         </div>
 
+        <!-- Firefox Account Dialog -->
+        <div id="fxa-dialog"></div>
+
         <div id="authentication-dialog">
           <!--div id="authentication-dialog-ftp" role="dialog" class="generic-dialog">
           </div-->
@@ -754,21 +760,7 @@
           </div>
         </div> <!-- end of #modal-dialog -->
 
-        <!-- Firefox Accounts dialog. Dummy UI. -->
-        <div id="fxa-dialog">
-          <div>
-            <button id="fxa-close-dialog">Close</button>
-          </div>
-          <div>
-            <button id="fxa-delete-account">Delete</button>
-            <button id="fxa-get-accounts">Get Accounts</button>
-            <button id="fxa-logout">Logout</button>
-            <button id="fxa-query-account">Query Account</button>
-            <button id="fxa-sign-in">SignIn</button>
-            <button id="fxa-sign-up">SignUp</button>
-          </div>
-          <div id="fxa-result"></div>
-        </div>
+       
 
       </div> <!-- end of #overlay-dialog -->
 

@@ -1,111 +1,65 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-
-/**
- * Check fxa_manager.js for a further explanation about Firefox Accounts and
- * its architecture in Firefox OS.
- */
-
 'use strict';
 
-//**** DUMMY TEST *****
-
-var FxAccountsUI = {
-
-  _successCb: null,
-  _errorCb: null,
-  _dialog: document.getElementById('fxa-dialog'),
-  _screen: document.getElementById('screen'),
-  _closeButton: document.getElementById('fxa-close-dialog'),
-  _deleteAccountButton: document.getElementById('fxa-delete-account'),
-  _getAccountsButton: document.getElementById('fxa-get-accounts'),
-  _logoutButton: document.getElementById('fxa-logout'),
-  _queryAccountButton: document.getElementById('fxa-query-account'),
-  _signInButton: document.getElementById('fxa-sign-in'),
-  _signUpButton: document.getElementById('fxa-sign-up'),
-  _result: document.getElementById('fxa-result'),
-
-  init: function init() {
-    this._closeButton.addEventListener('click', this.closeFlow.bind(this));
-    this._deleteAccountButton.addEventListener('click', this.deleteAccount);
-    this._getAccountsButton.addEventListener('click', this.getAccounts);
-    this._logoutButton.addEventListener('click', this.logout);
-    this._queryAccountButton.addEventListener('click', this.queryAccount);
-    this._signInButton.addEventListener('click', this.signIn);
-    this._signUpButton.addEventListener('click', this.signUp);
+var FxUI = {
+  dialog: null,
+  panel: null,
+  onerrorCB: null,
+  onsuccessCB: null,
+  init: function fxa_ui_init() {
+    var dialogOptions = {
+      onHide: this.reset.bind(this)
+    };
+    this.dialog = SystemDialog('fxa-dialog', dialogOptions);
+    this.panel = document.getElementById('fxa-dialog');
+    this.iframe = document.createElement('iframe');
+    this.iframe.id = 'fxa-iframe';
   },
-
-  openFlow: function openFlow(entryPoint, accountId, successCb, errorCb) {
-    // Temporary stuff.
-    if (successCb && successCb instanceof Function) {
-      this._successCb = successCb;
-    }
-    if (errorCb && errorCb instanceof Function) {
-      this._errorCb = errorCb;
-    }
-
-    this._screen.classList.add('fxa-dialog');
+  // Sign in/up flow
+  login: function fxa_ui_login(onsuccess, onerror) {
+    this.onsuccessCB = onsuccess;
+    this.onerrorCB = onerror;
+    this.loadFlow('login');
   },
-
-  closeFlow: function closeFlow(error, result) {
-    this._screen.classList.remove('fxa-dialog');
-
-    if (result && this._successCb) {
-      this._successCb(result);
-    } else if (error && this._errorCb) {
-      this._errorCb(error);
-    }
+  // Logout flow
+  logout: function fxa_ui_login(onsuccess, onerror) {
+    this.onsuccessCB = onsuccess;
+    this.onerrorCB = onerror;
+    this.loadFlow('logout');
   },
-
-  showResult: function showResult(result) {
-    FxAccountsUI._result.innerHTML = result;
+  // Delete flow
+  delete: function fxa_ui_delete(onsuccess, onerror) {
+    this.onsuccessCB = onsuccess;
+    this.onerrorCB = onerror;
+    this.loadFlow('delete');
   },
-
-  deleteAccount: function deleteAccount() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.deleteAccount('dummy@domain.org', 'pass',
-                                     FxAccountsUI.showResult,
-                                     FxAccountsUI.showResult);
-    });
+  // Method which close the Dialog
+  close: function fxa_ui_end() {
+    this.dialog.hide();
   },
-
-  getAccounts: function getAccounts() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.getAccounts(FxAccountsUI.showResult,
-                                   FxAccountsUI.showResult);
-    });
+  // Method for reseting the panel
+  reset: function fxa_ui_reset() {
+    this.panel.innerHTML = '';
+    this.onerrorCB = null;
+    this.onsuccessCB = null;
   },
-
-  logout: function logout() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.logout('dummy@domain.org', 'pass',
-                              FxAccountsUI.showResult,
-                              FxAccountsUI.showResult);
-    });
+  // Method for loading the iframe with the flow required
+  loadFlow: function fxa_ui_loadFlow(flow) {
+    this.iframe.setAttribute('src', '../fxa/fxa_module.html#' + flow);
+    this.panel.appendChild(this.iframe);
+    this.dialog.show();
   },
-
-  queryAccount: function queryAccount() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.queryAccount(FxAccountsUI.showResult,
-                                    FxAccountsUI.showResult);
-    });
+  // Method for sending the email to the App
+  // which request FxAccounts
+  done: function(data) {
+    // Proccess data retrieved
+    this.onsuccessCB && this.onsuccessCB(data);
+    this.close();
   },
-
-  signIn: function signIn() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.signIn('dummy@domain.org', 'pass',
-                              FxAccountsUI.showResult,
-                              FxAccountsUI.showResult);
-    });
-  },
-
-  signUp: function signUp() {
-    LazyLoader.load('js/fxa_client.js', function() {
-      FxAccountsClient.signUp('dummy@domain.org', 'pass',
-                              FxAccountsUI.showResult,
-                              FxAccountsUI.showResult);
-    });
+  error: function() {
+    this.onerrorCB && this.onerrorCB();
+    this.close();
   }
 };
 
-FxAccountsUI.init();
+FxUI.init();
+
