@@ -629,3 +629,17 @@ html[dir="rtl"] label[for^="pwd"] {
   padding: 0.5rem 1.2rem 0;
   line-height: 1.2;
 }
+/******************************************************************************
+ * Firefox Accounts
+ */
+#fxa-delete-account {
+  border-radius: 0.3rem;
+  background-color: darkred;
+  color: #fff;
+  border: none;
+  text-shadow: none;
+}
+
+#fxa-descriptions {
+  font-size: 1.4rem;
+}
