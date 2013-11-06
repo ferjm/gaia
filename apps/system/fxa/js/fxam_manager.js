@@ -21,7 +21,4 @@ var FxaModuleManager = {
   }
 };
 
-window.addEventListener('load', function load() {
-  window.removeEventListener('load', load);
-  FxaModuleManager.init();
-});
+Utils.once(window, 'load', FxaModuleManager.init.bind(FxaModuleManager));

@@ -9,6 +9,16 @@
       return str.replace(rdashes, function replacer(str, p1) {
         return p1.toUpperCase();
       });
+    },
+
+    once: function(element, eventName, handler) {
+      if (typeof element === "string")
+        element = document.querySelector(element);
+
+      element.addEventListener(eventName, function handlerDecorator(event) {
+        element.removeEventListener(eventName, handlerDecorator, false);
+        handler.call(this, event);
+      }, false);
     }
   };
 

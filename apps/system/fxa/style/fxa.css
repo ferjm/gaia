@@ -71,6 +71,14 @@ body {
   display: none;
 }
 
+.navigation-back-only button {
+  margin: 0;
+}
+
+.navigation-back-only button.right {
+  display: none;
+}
+
 .navigation-done #fxa-module-back,
 .navigation-done #fxa-module-next {
   display: none;
@@ -137,11 +145,11 @@ body {
  * Password screen styles
  */
 
-#fxa-password h3 {
+.fxa-password h3 {
   text-align: left;
 }
 
-#fxa-password .forgot-password {
+.fxa-password .forgot-password {
   font-size: 1rem;
 }
 
@@ -225,3 +233,13 @@ body {
 #fxa-overlay.show {
   display: flex;
 }
+
+form[role=dialog] {
+  display: none;
+}
+
+form[role=dialog].show {
+  display: block;
+}
+
+

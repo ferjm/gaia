@@ -6,6 +6,7 @@
     <link href="../shared/style/headers.css" rel="stylesheet" type="text/css">
     <link href="../shared/style/switches.css" rel="stylesheet" type="text/css">
     <link href="../shared/style/buttons.css" rel="stylesheet" type="text/css">
+    <link href="../shared/style/confirm.css" rel="stylesheet" type="text/css">
     <link href="../shared/style/input_areas.css" rel="stylesheet" type="text/css">
     <link href="../shared/style_unstable/progress_activity.css" rel="stylesheet" type="text/css">
     <link href="style/fxa.css" rel="stylesheet" type="text/css">
@@ -14,18 +15,28 @@
 
     <link rel="import" href="elements/fxa-intro.html">
     <link rel="import" href="elements/fxa-email.html">
-    <link rel="import" href="elements/fxa-password.html">
-    <link rel="import" href="elements/fxa-final-summary.html">
-    
-    
+
+    <link rel="import" href="elements/fxa-set-password.html">
+    <link rel="import" href="elements/fxa-signup-success.html">
+
+    <link rel="import" href="elements/fxa-enter-password.html">
+    <link rel="import" href="elements/fxa-signin-success.html">
+    <link rel="import" href="elements/fxa-password-reset-success.html">
+    <link rel="import" href="elements/fxa-tos.html">
+    <link rel="import" href="elements/fxa-pp.html">
+
+
     <script src="shared/js/lazy_loader.js"></script>
-    <script src="shared/js/l10n.js"></script>
+    <script src="/shared/js/l10n.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/fxam_overlay.js"></script>
+    <script src="js/fxam_error_overlay.js"></script>
     <script src="js/fxam_navigation.js"></script>
     <script src="js/fxam_ui.js"></script>
     <script src="js/fxam_manager.js"></script>
-    
+    <script src="js/fxam_states.js"></script>
+    <script src="js/fxam_module.js"></script>
+
   </head>
   <body>
     <section role="region" class="skin-organic">
@@ -37,8 +48,13 @@
       <article id="step-container">
         <section id="fxa-intro" is="fxa-intro" class="screen"></section>
         <section id="fxa-email" is="fxa-email" class="screen"></section>
-        <section id="fxa-password" is="fxa-password" class="screen"></section>
-        <section id="fxa-final-summary" is="fxa-final-summary" class="screen"></section>
+        <section id="fxa-set-password" is="fxa-set-password" class="screen fxa-password"></section>
+        <section id="fxa-enter-password" is="fxa-enter-password" class="screen fxa-password"></section>
+        <section id="fxa-signup-success" is="fxa-signup-success" class="screen"></section>
+        <section id="fxa-signin-success" is="fxa-signin-success" class="screen"></section>
+        <section id="fxa-password-reset-success" is="fxa-password-reset-success" class="screen"></section>
+        <section id="fxa-tos" is="fxa-tos" class="screen" data-navigation="back"></section>
+        <section id="fxa-pp" is="fxa-pp" class="screen" data-navigation="back"></section>
       </article>
       <nav role="navigation" class="horizontal navigation" id="fxa-module-navigation">
         <button id="fxa-module-back" class="left">
@@ -57,6 +73,17 @@
       <progress></progress>
       <p id="fxa-overlay-msg">Connecting to Firefox</p>
     </section>
-    
+
+
+    <!-- Error message overlay -->
+    <form role="dialog" data-type="confirm" id="fxa-error-overlay" class="fade-in">
+      <section>
+        <h1 id="fxa-error-title">Error message</h1>
+        <p><small id="fxa-error-msg">Error message.</small></p>
+        <menu>
+          <button class="full" data-l10n-id="OK" id="fxa-error-ok">OK</button>
+        </menu>
+      </section>
+    </form>
   </body>
 </html>
