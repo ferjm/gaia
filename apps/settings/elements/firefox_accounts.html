@@ -1,0 +1,88 @@
+<element name="fxa" extends="section">
+  <template>
+
+    <header>
+      <a href="#root"><span class="icon icon-back">back</span></a>
+      <h1 data-l10n-id="fxa-accounts"> Firefox Accounts </h1>
+    </header>
+
+    <div id="fxa-overlay"></div>
+    <div id="fxa-logged-out">
+      <ul>
+        <li>
+          <p data-l10n-id="fxa-description" id="fxa-logged-out-description" class="description">
+            Firefox lets you use a single account to log in to services like
+            Marketplace and Where's my Fox.
+          </p>
+        </li>
+        <li>
+          <label>
+            <button id="fxa-login">
+              <span data-l10n-id="fxa-login">Create Account or Sign In</span>
+            </button>
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div id="fxa-unverified" hidden>
+      <header>
+        <h2 data-l10n-id="fxa-confirm-account">Confirm Your Account</h2>
+      </header>
+      <ul>
+        <li>
+          <p data-l10n-id="fxa-verification-email-sent" id="fxa-unverified-text" class="description">
+            We've sent an email to: <em>foo@bar.com</em>
+          </p>
+          <p data-l10n-id="fxa-please-confirm" class="description">
+            Please confirm your account by clicking the link in your email.
+          </p>
+          <p data-l10n-id="fxa-how-to-access" class="description">
+            You can access and manage your account from your phone's settings.
+          </p>
+        </li>
+      </ul>
+    </div>
+    <div id="fxa-logged-in" hidden>
+      <header>
+        <h2 data-l10n-id="fxa-myaccount"> My Account </h2>
+      </header>
+      <ul>
+        <li>
+          <p data-l10n-id="fxa-description" class="description">
+            Firefox lets you use a single account to log in to services like
+            Marketplace and Where's my Fox.
+          </p>
+          <p data-l10n-id="fxa-logged-in-text" id="fxa-logged-in-text" class="description">
+            Logged in as <em>foo@bar.com</em>
+          </p>
+        </li>
+      </ul>
+
+      <header>
+        <h2 data-l10n-id="fxa-registered-apps-header"> Registered Apps </h2>
+      </header>
+      <ul>
+        <li>
+          <span data-l10n-id="fxa-marketplace-app"> Marketplace </span>
+        </li>
+        <li>
+          <span data-l10n-id="fxa-wheres-my-fox-app"> Where's my Fox </span>
+        </li>
+      </ul>
+
+      <header>
+        <h2 data-l10n-id="fxa-account-options"> Account Options </h2>
+      </header>
+      <ul>
+        <li>
+          <label>
+            <button id="fxa-logout">
+              <span data-l10n-id="fxa-logout"> Log Out </span>
+            </button>
+          </label>
+        </li>
+      </ul>
+    </div>
+
+  </template>
+</element>

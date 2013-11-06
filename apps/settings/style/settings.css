@@ -769,3 +769,25 @@ html[dir="rtl"] #feedback-sad {
   float: left;
 }
 
+/******************************************************************************
+ * Firefox Accounts
+ */
+
+/* TODO is there a UI library overlay somewhere in /shared? */
+#fxa-overlay {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  font-size: 2rem;
+  background-color: black;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#fxa-overlay.show {
+  display: flex;
+}

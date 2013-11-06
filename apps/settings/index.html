@@ -62,6 +62,14 @@
     <!-- Screen layout watcher -->
     <script defer="" src="/shared/js/screen_layout.js"></script>
 
+    <!-- Firefox Accounts code -->
+    <script defer="" src="/shared/js/fxa_iac_client.js"></script>
+    <!-- TODO is this ok to do? I can't get the index.html firefox accounts
+         menu item to update on settings app load any other way. -->
+    <script defer="" src="shared/js/text_normalizer.js"></script>
+    <script defer="" src="js/mvvm/models.js"></script>
+    <script defer="" src="js/firefox_accounts.js"></script>
+
     <!-- Specific code -->
     <script defer="" src="js/settings.js"></script>
 
@@ -152,6 +160,7 @@
     <link rel="import" href="/elements/help.html">
     <link rel="import" href="/elements/icc.html">
     <link rel="import" href="/elements/downloads.html">
+    <link rel="import" href="/elements/firefox_accounts.html">
   </head>
   <body class="skin-organic uninit">
     <!--
@@ -322,6 +331,9 @@
     <!-- SIM Toolkit -->
     <section is="icc" role="region" id="icc"></section>
 
+    <!-- Firefox Accounts -->
+    <section is="fxa" role="region" id="fxa"></section>
+
     <!-- Main List -->
     <section role="region" id="root" class="current" data-rendered="true">
       <header>
@@ -415,16 +427,19 @@
         </ul>
 
         <!-- Main :: Accounts -->
-        <header hidden="">
+        <header>
           <h2 data-l10n-id="accounts">Accounts</h2>
         </header>
-        <ul hidden="">
+        <ul>
           <li>
-            <a id="menuItem-persona" class="menu-item" href="#persona" data-l10n-id="persona">Persona</a>
+            <small id="fxa-desc" class="menu-item-desc"></small>
+            <a id="menuItem-fxa" class="menu-item" href="#fxa" data-l10n-id="fxa">Firefox Accounts</a>
           </li>
+          <!--
           <li>
             <a id="menuItem-mail" class="menu-item" href="#mail" data-l10n-id="mail">Mail</a>
           </li>
+          -->
         </ul>
 
         <!-- Main :: Security & Privacy -->
