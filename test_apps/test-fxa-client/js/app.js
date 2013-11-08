@@ -22,19 +22,22 @@ var TestFxAClient = function TestFxAClient() {
   var showResponse = function showResponse(response) {
     alert('Success: ' + JSON.stringify(response));
   };
+  var showError = function showResponse(response) {
+    alert('Error: ' + JSON.stringify(response));
+  };
 
   var handler = function handler(evt) {
     var method = evt.target.id;
     switch (method) {
       case 'getAccounts':
       case 'openFlow':
-        FxAccountsIACHelper[method](showResponse, showResponse);
+        FxAccountsIACHelper[method](showResponse, showError);
         break;
       case 'logout':
       case 'deleteAccount':
       case 'changePassword':
         FxAccountsIACHelper[method]('dummy@domain.org', showResponse,
-                                    showResponse);
+                                    showError);
         break;
     }
 
