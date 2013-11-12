@@ -11,7 +11,9 @@ FxaModulePasswordResetSuccess = (function() {
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
     options = options || {};
-    this.importElements('fxa-summary-email');
+    this.importElements(
+      'fxa-summary-email'
+    );
     this.fxaSummaryEmail.innerHTML = options.email;
   };
 

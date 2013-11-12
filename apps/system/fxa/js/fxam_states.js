@@ -44,7 +44,11 @@ FxaModuleStates = (function() {
     },
     DONE: null,
     back: function() {
-      window.history.back();
+      FxaModuleNavigation.back();
+    },
+    setState: function setState(state) {
+      if ((! state in this) || typeof state === 'function') return;
+      document.location.hash = state.id;
     }
   };
 }());

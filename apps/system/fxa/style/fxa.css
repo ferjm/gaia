@@ -31,6 +31,11 @@ body {
   background: url(bg_light.png);
 }
 
+h3 {
+  text-align: left;
+}
+
+
 /* * * * * * * * * * * * * * * * * * * * * * * *
  * Navigation bar based on a flex model
  * * * * * * * * * * * * * * * * * * * * * * * */
@@ -144,10 +149,6 @@ body {
  * Password screen styles
  */
 
-.fxa-password h3 {
-  text-align: left;
-}
-
 .fxa-password .forgot-password {
   font-size: 1rem;
 }
@@ -203,6 +204,16 @@ body {
 
 .fxa-logo.small {
   width: 30%;
+}
+
+.fxa-envelope {
+  background-image: url('ff_account_envelope.png');
+  background-repeat: no-repeat;
+  background-size: 5.3rem 3.4rem;
+  background-position: center left;
+  padding-left: 6.3rem;
+  min-height: 3.4rem; /* short email addresses will only take up one line*/
+                      /* force the entire envelope image to be displayed */
 }
 
 #fxa-error-overlay {
