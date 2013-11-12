@@ -15,26 +15,25 @@ var FxaModuleNavigation = {
       FxaModuleUI.setMaxSteps(View.length);
       this.loadStep(View.start);
     }.bind(this));
-    window.addEventListener('hashchange', this.onHashChange.bind(this), false);
-  },
-  onHashChange: function(event) {
-    var hash = document.location.hash.replace(/^#/, '');
-
-    var step = getStep(hash);
-    if (step) {
-      FxaModuleUI.loadStep(step, this.stepCount, function(module) {
-        this.currentModule = module;
-        this.currentStep = step;
-      }.bind(this));
-    }
   },
   back: function() {
     this.stepCount--;
     var lastStep = this.stepsRun.pop();
-    this.loadStep(lastStep);
+    this.loadStep(lastStep, true);
   },
-  loadStep: function(step) {
-    document.location.hash = step.id;
+  loadStep: function(step, back) {
+    if (!step)
+      return;
+
+    FxaModuleUI.loadStep({
+      step: step,
+      count: this.stepCount,
+      back: back,
+      callback: function(module) {
+        this.currentModule = module;
+        this.currentStep = step;
+      }.bind(this)
+    });
   },
   next: function() {
     var loadNextStep = function loadNextStep(nextStep) {
@@ -43,20 +42,9 @@ var FxaModuleNavigation = {
       this.loadStep(nextStep);
     };
 
-
     this.currentModule.onNext(loadNextStep.bind(this));
   },
   done: function() {
     FxaModuleManager.done();
   }
 };
-
-function getStep(hash) {
-  for (var stateName in FxaModuleStates) {
-    var state = FxaModuleStates[stateName];
-    if (typeof state === 'function') continue;
-
-    if (state.id === hash) return state;
-  }
-}
-

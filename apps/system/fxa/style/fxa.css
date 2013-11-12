@@ -129,7 +129,6 @@ body {
 
 .current {
   display: block;
-  visibility: visible;
 }
 
 /*
@@ -153,12 +152,9 @@ body {
   font-size: 1rem;
 }
 
-
-/* TODO: Restore animations!!! */
-
 /* Animate next screen */
-/*.currentToLeft {
-  visibility: visible;
+.currentToLeft {
+  display:block;
   animation: currentToLeft 0.4s forwards;
 }
 @keyframes currentToLeft {
@@ -166,17 +162,17 @@ body {
   100% { transform: translateX(-100%); }
 }
 .rightToCurrent {
-  visibility: visible;
+  display:block;
   animation: rightToCurrent 0.4s forwards;
 }
 @keyframes rightToCurrent {
   0% { transform: translateX(100%); }
   100% { transform: translateX(0); }
 }
-*/
+
 /* Animate prev screen */
-/*.leftToCurrent {
-  visibility: visible;
+.leftToCurrent {
+  display: block;
   animation: leftToCurrent 0.4s forwards;
 }
 @keyframes leftToCurrent {
@@ -184,16 +180,16 @@ body {
   100% { transform: translateX(0); }
 }
 .currentToRight {
-  visibility: visible;
+  display: block;
   animation: currentToRight 0.4s forwards;
 }
 @keyframes currentToRight {
   0% { transform: translateX(0); }
   100% { transform: translateX(100%); }
-}*/
+}
 
 .current {
-  visibility: visible;
+  display: block;
 }
 
 .screen a {
