@@ -62,7 +62,7 @@ FxaModuleEnterPassword = (function() {
   Module.onNext = function onNext(gotoNextStepCallback) {
     var passwordEl = this.fxaPwInput;
 
-    if ( ! isPasswordValid(passwordEl)) {
+    if (! isPasswordValid(passwordEl)) {
       return showPasswordInvalid();
     }
 
@@ -71,7 +71,7 @@ FxaModuleEnterPassword = (function() {
     checkPasswordCorrect(this.email, passwordValue,
           function(isPasswordCorrect) {
       hideCheckingPassword();
-      if ( ! isPasswordCorrect) {
+      if (! isPasswordCorrect) {
         return showPasswordMismatch();
       }
 

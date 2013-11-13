@@ -6,7 +6,7 @@ var FxaModuleErrorOverlay = {
     var titleEl = document.querySelector('#fxa-error-title');
     var messageEl = document.querySelector('#fxa-error-msg');
 
-    if ( ! (overlayEl && titleEl && messageEl))
+    if (! (overlayEl && titleEl && messageEl))
       return;
 
     titleEl.textContent = title;
@@ -19,7 +19,7 @@ var FxaModuleErrorOverlay = {
 
   hide: function fxam_overlay_hide() {
     var overlayEl = document.querySelector('#fxa-error-overlay');
-    if ( ! overlayEl)
+    if (! overlayEl)
       return;
 
     overlayEl.classList.remove('show');

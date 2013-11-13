@@ -21,9 +21,7 @@ var FxaModuleNavigation = {
     var hash = document.location.hash.replace(/^#/, '');
 
     var step = getStep(hash);
-    console.log("getting step: " + JSON.stringify(step, null, 2));
     if (step) {
-      console.log("loading step: " + JSON.stringify(step, null, 2));
       FxaModuleUI.loadStep(step, this.stepCount, function(module) {
         this.currentModule = module;
         this.currentStep = step;
@@ -43,10 +41,10 @@ var FxaModuleNavigation = {
       this.stepCount++;
       this.stepsRun.push(this.currentStep);
       this.loadStep(nextStep);
-    }.bind(this);
+    };
 
 
-    this.currentModule.onNext(loadNextStep);
+    this.currentModule.onNext(loadNextStep.bind(this));
   },
   done: function() {
     FxaModuleManager.done();
@@ -56,7 +54,7 @@ var FxaModuleNavigation = {
 function getStep(hash) {
   for (var stateName in FxaModuleStates) {
     var state = FxaModuleStates[stateName];
-    if (typeof state === "function") continue;
+    if (typeof state === 'function') continue;
 
     if (state.id === hash) return state;
   }

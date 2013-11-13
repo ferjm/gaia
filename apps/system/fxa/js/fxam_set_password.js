@@ -62,7 +62,7 @@ FxaModuleSetPassword = (function() {
   Module.onNext = function onNext(gotoNextStepCallback) {
     var passwordEl = this.fxaPwInput;
 
-    if ( ! isPasswordValid(passwordEl)) {
+    if (! isPasswordValid(passwordEl)) {
       return showInvalidPassword();
     }
 
@@ -70,7 +70,7 @@ FxaModuleSetPassword = (function() {
     showRegistering();
     setPassword(this.email, passwordValue, function(isPasswordSet) {
       hideRegistering();
-      if ( ! isPasswordSet) {
+      if (! isPasswordSet) {
         return showPasswordNotSet();
       }
 

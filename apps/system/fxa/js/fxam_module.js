@@ -1,7 +1,7 @@
 
 
 FxaModule = (function() {
-  "use strict";
+  'use strict';
 
   var Module = {
     init: function() {

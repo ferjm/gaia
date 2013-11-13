@@ -10,7 +10,6 @@ FxaModuleEnterEmail = (function() {
   function isEmailValid(emailEl) {
     // user can skip ff account creation with no error
     // if no email is entered.
-    console.log("checkign email validity of: " + emailEl);
     return ! emailEl.value || emailEl.validity.valid;
   }
 
@@ -28,13 +27,15 @@ FxaModuleEnterEmail = (function() {
 
   function getNextState(email, done) {
     // User can abort FTE without entering an email address.
-    if ( ! email) return done(FxaModuleStates.DONE);
+    if (! email) return done(FxaModuleStates.DONE);
 
     showCheckingEmail();
     isReturningUser(email, function(isReturning) {
       hideCheckingEmail();
       FxaModuleManager.setParam('email', email);
-      done(isReturning ? FxaModuleStates.SET_PASSWORD : FxaModuleStates.ENTER_PASSWORD);
+      done(isReturning ?
+              FxaModuleStates.SET_PASSWORD :
+              FxaModuleStates.ENTER_PASSWORD);
     });
   }
 
@@ -53,7 +54,7 @@ FxaModuleEnterEmail = (function() {
   Module.onNext = function onNext(gotoNextStepCallback) {
     var emailEl = this.fxaEmailInput;
 
-    if ( ! isEmailValid(emailEl)) return showInvalidEmail();
+    if (! isEmailValid(emailEl)) return showInvalidEmail();
 
     var emailValue = emailEl.value;
     this.emailValue = emailValue;

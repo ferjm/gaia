@@ -12,7 +12,7 @@
     },
 
     once: function(element, eventName, handler) {
-      if (typeof element === "string")
+      if (typeof element === 'string')
         element = document.querySelector(element);
 
       element.addEventListener(eventName, function handlerDecorator(event) {
