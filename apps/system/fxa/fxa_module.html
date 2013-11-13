@@ -2,7 +2,6 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <script src="../shared/js/lazy_loader.js"></script>
     <link href="../shared/style/headers.css" rel="stylesheet" type="text/css">
     <link href="../shared/style/switches.css" rel="stylesheet" type="text/css">
     <link href="../shared/style/buttons.css" rel="stylesheet" type="text/css">
@@ -26,16 +25,18 @@
     <link rel="import" href="elements/fxa-pp.html">
 
 
-    <script src="shared/js/lazy_loader.js"></script>
-    <script src="/shared/js/l10n.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/fxam_overlay.js"></script>
-    <script src="js/fxam_error_overlay.js"></script>
-    <script src="js/fxam_navigation.js"></script>
-    <script src="js/fxam_ui.js"></script>
-    <script src="js/fxam_manager.js"></script>
-    <script src="js/fxam_states.js"></script>
-    <script src="js/fxam_module.js"></script>
+    <script defer src="../shared/js/lazy_loader.js"></script>
+    <script defer src="../shared/js/l10n.js"></script>
+    
+    <script defer src="js/utils.js"></script>
+    <script defer src="js/fxam_server_request.js"></script>
+    <script defer src="js/fxam_overlay.js"></script>
+    <script defer src="js/fxam_error_overlay.js"></script>
+    <script defer src="js/fxam_navigation.js"></script>
+    <script defer src="js/fxam_ui.js"></script>
+    <script defer src="js/fxam_manager.js"></script>
+    <script defer src="js/fxam_states.js"></script>
+    <script defer src="js/fxam_module.js"></script>
 
   </head>
   <body>
@@ -56,7 +57,7 @@
         <section id="fxa-tos" is="fxa-tos" class="screen" data-navigation="back"></section>
         <section id="fxa-pp" is="fxa-pp" class="screen" data-navigation="back"></section>
       </article>
-      <nav role="navigation" class="horizontal navigation" id="fxa-module-navigation">
+      <nav role="navigation" class="horizontal navigation navigation-single-button" id="fxa-module-navigation">
         <button id="fxa-module-back" class="left">
           Back
         </button>

@@ -205,6 +205,10 @@ body {
   width: 30%;
 }
 
+#fxa-error-overlay {
+  z-index: 10;
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * *
  * Overlay:
  *   IMPORTANT: Avoid to use 'visibility' or 'opacity' due

@@ -1,9 +1,8 @@
 'use strict';
 
 var FxaModuleNavigation = {
-  view: null,
   stepCount: 0,
-  maxSteps: null,
+  currentModule: null,
   init: function(flow) {
     // Listen on hash changes for panel changes
     var self = this;
@@ -27,42 +26,53 @@ var FxaModuleNavigation = {
 
     // Load view
     LazyLoader._js('view/view_' + flow + '.js', function loaded() {
-      this.view = View;
-      this.maxSteps = View.length;
-
+      // TODO Check how to load maxSteps,
+      // do we need this?
       FxaModuleUI.setMaxSteps(View.length);
-      location.hash = View.start.id;
+      window.location.hash = View.start.id;
     }.bind(this));
   },
   loadStep: function(panel, back) {
     if (!panel)
       return;
-
-    FxaModuleUI.loadStep({
-      step: panel,
+    var self = this;
+    FxaModuleUI.loadScreen({
+      panel: panel,
       count: this.stepCount,
       back: back,
-      callback: function() {
-        // not dependent on the callback anymore
+      onload: function() {
+        this.currentModule = window[this.moduleById(panel.id)];
+        this.currentModule.init &&
+          this.currentModule.init(FxaModuleManager.paramsRetrieved);
+      }.bind(this),
+      onanimate: function() {
+        this.updatingStep = false;
       }.bind(this)
     });
   },
   back: function() {
+    // Avoid multiple taps on 'back' if
+    // screen transition is not over.
+    if (this.updatingStep) {
+      return;
+    }
+    this.updatingStep = true;
+    // Execute module back (if is defined)
+    this.currentModule.onBack && this.currentModule.onBack();
+    // Go to previous step
     this.backAnim = true;
+
     window.history.back();
+
+
   },
   next: function() {
-    // get a reference to the module responsible for the next button ..
-    // TODO(Olav): Let modules live on an object other than window?
-    var currentModuleId = location.hash.substr(1);
-    this.currentModule = window[this.moduleById(currentModuleId)];
+    // TODO Add shield against multiple taps
     var loadNextStep = function loadNextStep(nextStep) {
-      //TODO(Olav): DONE state is null ..
       if (!nextStep)
         return;
       location.hash = nextStep.id;
     };
-
     this.currentModule.onNext(loadNextStep.bind(this));
   },
   moduleById: function(id) {

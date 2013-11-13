@@ -2,64 +2,81 @@
  * Module checks the validity of an email address, and if valid,
  * determine which screen to go to next.
  */
+
 FxaModuleEnterEmail = (function() {
   'use strict';
 
   var _ = navigator.mozL10n.get;
 
-  function isEmailValid(emailEl) {
-    // user can skip ff account creation with no error
-    // if no email is entered.
-    return ! emailEl.value || emailEl.validity.valid;
+  function _isEmailValid(emailEl) {
+    return emailEl && emailEl.value && emailEl.validity.valid;
   }
 
-  function showInvalidEmail() {
-    FxaModuleErrorOverlay.show(_('invalidEmail'));
+  function _loadSignIn(done) {
+    done(FxaModuleStates.ENTER_PASSWORD);
   }
 
-  function showCheckingEmail() {
-    FxaModuleOverlay.show(_('checkingEmail'));
+  function _loadSignUp(done) {
+    done(FxaModuleStates.SET_PASSWORD);
   }
 
-  function hideCheckingEmail() {
-    FxaModuleOverlay.hide();
-  }
-
-  function getNextState(email, done) {
-    // User can abort FTE without entering an email address.
-    if (! email) return done(FxaModuleStates.DONE);
-
-    showCheckingEmail();
-    isReturningUser(email, function(isReturning) {
-      hideCheckingEmail();
-      FxaModuleManager.setParam('email', email);
-      done(isReturning ?
-              FxaModuleStates.SET_PASSWORD :
-              FxaModuleStates.ENTER_PASSWORD);
-    });
-  }
-
-  function isReturningUser(email, done) {
-    setTimeout(function() {
-      // TODO - hook this up to a backend somewhere.
-      done(email === 'newuser@newuser.com');
-    }, 500);
+  function _enableNext(emailEl) {
+    if (_isEmailValid(emailEl)) {
+      FxaModuleUI.enableNextButton();
+    } else {
+      FxaModuleUI.disableNextButton();
+    }
   }
 
   var Module = Object.create(FxaModule);
   Module.init = function() {
+    // Blocks the navigation until check the condition
+    _enableNext(this.fxaEmailInput);
+
+    if (this.initialized) {
+      return;
+    }
+
+    // Cache HTML elements
     this.importElements('fxa-email-input');
+    // Add listeners
+    this.fxaEmailInput.addEventListener(
+      'input',
+      function onInput(event) {
+        _enableNext(event.target);
+      }
+    );
+
+    // Avoid to add listener twice
+    this.initialized = true;
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    var emailEl = this.fxaEmailInput;
+    FxaModuleOverlay.show(_('checkingEmail'));
 
-    if (! isEmailValid(emailEl)) return showInvalidEmail();
+    var email = this.fxaEmailInput.value;
 
-    var emailValue = emailEl.value;
-    this.emailValue = emailValue;
+    FxModuleServerRequest.checkEmail(
+      email,
+      function onServerResponse(response) {
+        FxaModuleOverlay.hide();
+        FxaModuleManager.setParam('email', email);
+        if (response.registered) {
+          _loadSignIn(gotoNextStepCallback);
+        } else {
+          _loadSignUp(gotoNextStepCallback);
+        }
+      },
+      function onNetworkError() {
+        FxaModuleOverlay.hide();
+        // TODO Add right l10n
+        FxaModuleErrorOverlay.show('NETWORK', 'La conexión...');
+      }
+    );
+  };
 
-    getNextState(emailValue, gotoNextStepCallback);
+  Module.onBack = function onBack() {
+    FxaModuleUI.enableNextButton();
   };
 
   return Module;

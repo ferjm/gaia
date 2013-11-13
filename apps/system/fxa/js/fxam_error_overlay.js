@@ -15,6 +15,11 @@ var FxaModuleErrorOverlay = {
     overlayEl.classList.add('show');
 
     Utils.once(document.querySelector('#fxa-error-ok'), 'click', this.hide);
+    Utils.once(
+      document.querySelector('#fxa-error-overlay'),
+      'submit',
+      this.prevent
+    );
   },
 
   hide: function fxam_overlay_hide() {
@@ -23,6 +28,11 @@ var FxaModuleErrorOverlay = {
       return;
 
     overlayEl.classList.remove('show');
+  },
+
+  prevent: function(event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
 };
 

@@ -4,6 +4,7 @@ FxaModule = (function() {
   'use strict';
 
   var Module = {
+    initialized: false,
     init: function() {
       // override this to do initialization
     },
