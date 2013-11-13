@@ -52,7 +52,7 @@ FxaModuleEnterEmail = (function() {
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    FxaModuleOverlay.show(_('checkingEmail'));
+    FxaModuleOverlay.show(_('fxa-connecting-to-firefox'));
 
     var email = this.fxaEmailInput.value;
 
@@ -69,11 +69,9 @@ FxaModuleEnterEmail = (function() {
       },
       function onNetworkError() {
         FxaModuleOverlay.hide();
-        // TODO Add right l10n
         FxaModuleErrorOverlay.show(
-          _('unableToConnect'),
-          _('unableToConnectExplanation')
-        );
+          _('fxa-checking-email-error-title'),
+          _('fxa-checking-email-error-message'));
       }
     );
   };

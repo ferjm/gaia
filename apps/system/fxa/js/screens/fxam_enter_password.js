@@ -22,6 +22,20 @@ FxaModuleEnterPassword = (function() {
     }
   }
 
+  function _showAuthenticationError() {
+    FxaModuleErrorOverlay.show(
+      _('fxa-authenticating-error-title'),
+      _('fxa-authenticating-error-message')
+    );
+  }
+
+  function _showPasswordMismatch() {
+    FxaModuleErrorOverlay.show(
+      _('fxa-invalid-password'),
+      _('fxa-cannot-authenticate')
+    );
+  }
+
   function _loadSigninSuccess(done) {
     done(FxaModuleStates.SIGNIN_SUCCESS);
   }
@@ -107,7 +121,7 @@ FxaModuleEnterPassword = (function() {
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    FxaModuleOverlay.show(_('authenticating'));
+    FxaModuleOverlay.show(_('fxa-authenticating'));
 
     FxModuleServerRequest.checkPassword(
       this.email,
@@ -117,21 +131,12 @@ FxaModuleEnterPassword = (function() {
         if (response.authenticated) {
           _loadSigninSuccess(gotoNextStepCallback);
         } else {
-          // TODO Implement 'invalid password' markup
-          // instead of the overlay
-          FxaModuleErrorOverlay.show(
-            _('invalidPassword'),
-            _('cannotAuthenticate')
-          );
+          _showPasswordMismatch();
         }
       },
       function onNetworkError() {
         FxaModuleOverlay.hide();
-        // TODO Add right l10n
-        FxaModuleErrorOverlay.show(
-          _('unableToConnect'),
-          _('unableToConnectExplanation')
-        );
+        _showAuthenticationError();
       }
     );
   };
