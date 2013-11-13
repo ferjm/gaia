@@ -35,9 +35,8 @@ var FxaModuleUI = {
     this.maxSteps = num;
   },
   loadStep: function(params) {
-    var id = params.step.id;
     var previousStep = document.getElementsByClassName('current')[0];
-    var currentStep = document.getElementById(id);
+    var currentStep = params.step;
     // Lazy load current panel
     LazyLoader.load(currentStep, function() {
       // If the panel contains any new script elements,
@@ -47,12 +46,7 @@ var FxaModuleUI = {
 
       // Once all scripts are loaded, load the modules/UI
       LazyLoader.load(scripts, function() {
-        currentStep.classList.add('current');
-        if (previousStep) {
-          previousStep.classList.remove('current');
-        }
-
-        if (params.count > 0 && params.count < FxaModuleUI.maxSteps - 1) {
+        if (params.count > 1 && params.count < FxaModuleUI.maxSteps) {
           FxaModuleUI.navigation.classList.remove('navigation-single-button');
           FxaModuleUI.navigation.classList.remove('navigation-back-only');
 
@@ -61,22 +55,24 @@ var FxaModuleUI = {
           }
         } else {
           FxaModuleUI.navigation.classList.add('navigation-single-button');
-          if (params.count === FxaModuleUI.maxSteps - 1) {
+          if (params.count === FxaModuleUI.maxSteps) {
             FxaModuleUI.navigation.classList.add('navigation-done');
           }
         }
-        this.progress(100 * (params.count + 1) / this.maxSteps);
+        this.progress(100 * params.count / this.maxSteps);
 
         // the module was just lazy loaded. We can now get a reference to it.
-        if (params.step.module) {
-          var module = window[params.step.module];
+        // TODO: Remove when modules initialize themselves
+        if (params.step) {
+          // TODO(Olav): Remove or make pretty if it stays ..
+          var module = window[FxaModuleNavigation.moduleById(params.step.id)];
           if (module.init) {
             module.init(FxaModuleManager.paramsRetrieved);
           }
         }
 
         this._animate(previousStep, currentStep, params.back);
-        params.callback && params.callback(module);
+        params.callback && params.callback();
       }.bind(this));
     }.bind(this));
   },
