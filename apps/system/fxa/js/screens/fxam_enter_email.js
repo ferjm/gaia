@@ -70,7 +70,10 @@ FxaModuleEnterEmail = (function() {
       function onNetworkError() {
         FxaModuleOverlay.hide();
         // TODO Add right l10n
-        FxaModuleErrorOverlay.show('NETWORK', 'La conexión...');
+        FxaModuleErrorOverlay.show(
+          _('unableToConnect'),
+          _('unableToConnectExplanation')
+        );
       }
     );
   };

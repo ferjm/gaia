@@ -1,83 +1,107 @@
 /**
+ * Module checks the validity of password given email address, and if valid,
+ * determine which screen to go to next.
  */
+
 FxaModuleEnterPassword = (function() {
   'use strict';
 
   var _ = navigator.mozL10n.get;
 
   // only checks whether the password passes input validation
-  function isPasswordValid(passwordEl) {
+  function _isPasswordValid(passwordEl) {
     var passwordValue = passwordEl.value;
     return passwordValue && passwordEl.validity.valid;
   }
 
-  function showPasswordInvalid() {
-    FxaModuleErrorOverlay.show(_('invalidPassword'));
+  function _enableNext(passwordEl) {
+    if (_isPasswordValid(passwordEl)) {
+      FxaModuleUI.enableNextButton();
+    } else {
+      FxaModuleUI.disableNextButton();
+    }
   }
 
-  function checkPasswordCorrect(email, password, done) {
-    // TODO - hook up to client lib to authenticate a user.
-    if (password === 'password') return done(true);
-    done(false);
+  function _loadSigninSuccess(done) {
+    done(FxaModuleStates.SIGNIN_SUCCESS);
   }
 
-  function showCheckingPassword() {
-    FxaModuleOverlay.show(_('authenticating'));
-  }
-
-  function hideCheckingPassword() {
-    FxaModuleOverlay.hide();
-  }
-
-  function showPasswordMismatch() {
-    FxaModuleErrorOverlay.show(_('cannotAuthenticate'));
-  }
-
-  function togglePasswordVisibility() {
-    var showPassword = !!this.fxaShowPw.checked;
-    var passwordFieldType = showPassword ? 'text' : 'password';
-
+  function _togglePasswordVisibility() {
+    var passwordFieldType = !!this.fxaShowPw.checked ? 'text' : 'password';
     this.fxaPwInput.setAttribute('type', passwordFieldType);
   }
 
-
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
-    options = options || {};
 
-    this.importElements(
-      'fxa-user-email',
-      'fxa-pw-input',
-      'fxa-show-pw'
-    );
+    if (!this.fxaUserEmail) {
+      this.importElements(
+        'fxa-user-email',
+        'fxa-pw-input',
+        'fxa-show-pw'
+      );
+    }
 
+    if (!options || !options.email) {
+      console.error('Options are not sent properly. Email not available');
+      return;
+    }
+
+    this.fxaPwInput.value = '';
+    this.fxaUserEmail.textContent = options.email;
     this.email = options.email;
 
-    this.fxaUserEmail.innerHTML = options.email;
+    _enableNext(this.fxaPwInput);
+
+    if (this.initialized) {
+      return;
+    }
+
+    // Add listeners
+    this.fxaPwInput.addEventListener(
+      'input',
+      function onInput(event) {
+        _enableNext(event.target);
+      }
+    );
 
     this.fxaShowPw.addEventListener(
-        'change', togglePasswordVisibility.bind(this), false);
+      'change',
+      _togglePasswordVisibility.bind(this),
+      false
+    );
+
+    this.initialized = true;
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    var passwordEl = this.fxaPwInput;
+    FxaModuleOverlay.show(_('authenticating'));
 
-    if (! isPasswordValid(passwordEl)) {
-      return showPasswordInvalid();
-    }
-
-    var passwordValue = passwordEl.value;
-    showCheckingPassword();
-    checkPasswordCorrect(this.email, passwordValue,
-          function(isPasswordCorrect) {
-      hideCheckingPassword();
-      if (! isPasswordCorrect) {
-        return showPasswordMismatch();
+    FxModuleServerRequest.checkPassword(
+      this.email,
+      this.fxaPwInput.value,
+      function onServerResponse(response) {
+        FxaModuleOverlay.hide();
+        if (response.authenticated) {
+          _loadSigninSuccess(gotoNextStepCallback);
+        } else {
+          // TODO Implement 'invalid password' markup
+          // instead of the overlay
+          FxaModuleErrorOverlay.show(
+            _('invalidPassword'),
+            _('cannotAuthenticate')
+          );
+        }
+      },
+      function onNetworkError() {
+        FxaModuleOverlay.hide();
+        // TODO Add right l10n
+        FxaModuleErrorOverlay.show(
+          _('unableToConnect'),
+          _('unableToConnectExplanation')
+        );
       }
-
-      this.passwordValue = passwordValue;
-      gotoNextStepCallback(FxaModuleStates.SIGNIN_SUCCESS);
-    }.bind(this));
+    );
   };
 
   return Module;

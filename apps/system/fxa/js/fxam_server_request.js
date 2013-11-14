@@ -5,14 +5,12 @@
   // We are going to use the following interface
   // https://github.com/mozilla/picl-idp/blob/master/docs/api.md
   // Wrapped by fxa_client.js
-  function _mockBehaviour(onsuccess, onerror) {
+  function _mockBehaviour(onsuccess, onerror, params) {
     setTimeout(function() {
       if ((Math.floor(Math.random() * 2) + 1) % 2) {
         // TODO Add an interface for letting know the module
         // the flow to follow
-        var params = {
-          registered: true
-        };
+
         onsuccess && onsuccess(params);
       } else {
         onerror && onerror();
@@ -27,10 +25,16 @@
       // FxAccountsClient.queryAccount(email, onsuccess, onerror);
       // is the method we need. However, we need to figure out if
       // error was due to wrong email, or network connection
-      _mockBehaviour(onsuccess, onerror);
+      var params = {
+        registered: true
+      };
+      _mockBehaviour(onsuccess, onerror, params);
     },
     checkPassword: function(email, password, onsuccess, onerror) {
-      _mockBehaviour(onsuccess, onerror);
+      var params = {
+        authenticated: true
+      };
+      _mockBehaviour(onsuccess, onerror, params);
     }
   };
   exports.FxModuleServerRequest = FxModuleServerRequest;

@@ -17,11 +17,11 @@ var FxaModuleUI = {
       FxaModuleManager.close();
     });
 
-    this.back.addEventListener('click', function() {
+    this.back.addEventListener('mousedown', function() {
       FxaModuleNavigation.back();
     });
 
-    this.next.addEventListener('click', function() {
+    this.next.addEventListener('mousedown', function() {
       FxaModuleNavigation.next();
     });
 
