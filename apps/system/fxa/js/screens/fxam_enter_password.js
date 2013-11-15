@@ -31,11 +31,12 @@ FxaModuleEnterPassword = (function() {
     this.fxaPwInput.setAttribute('type', passwordFieldType);
   }
 
-  function _requestPasswordReset(done) {
-    // TODO - hook up to IAC Client
-    setTimeout(function() {
-      done(Math.random() >= 0.5);
-    }, 500);
+  function _requestPasswordReset(email, done) {
+    FxModuleServerRequest.requestPasswordReset(email,
+      function(response) {
+        done(response.success);
+      },
+      done.bind(null, false));
   }
 
   function _showCouldNotResetPassword() {
@@ -43,9 +44,12 @@ FxaModuleEnterPassword = (function() {
   }
 
   function _forgotPassword() {
-    _requestPasswordReset(function(isRequestHandled) {
-      if (! isRequestHandled) {
-        return _showCouldNotResetPassword();
+    FxaModuleOverlay.show(_('fxa-requesting-password-reset'));
+    _requestPasswordReset(this.email, function(isRequestHandled) {
+      FxaModuleOverlay.hide();
+      if (!isRequestHandled) {
+        _showCouldNotResetPassword();
+        return;
       }
 
       FxaModuleStates.setState(FxaModuleStates.PASSWORD_RESET_SUCCESS);
