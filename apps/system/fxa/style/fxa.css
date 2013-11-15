@@ -199,15 +199,20 @@ h3 {
 }
 
 .fxa-logo {
-  width: 80%;
+  background-image: url('fxa_logo.png');
+  background-size: 100% auto;
+  margin: 0 auto;
+  width: 28rem;
+  height: 19.4rem;
 }
 
 .fxa-logo.small {
-  width: 30%;
+  width: 10rem;
+  height: 7rem;
 }
 
 .fxa-envelope {
-  background-image: url('ff_account_envelope.png');
+  background-image: url('fxa_envelope.png');
   background-repeat: no-repeat;
   background-size: 5.3rem 3.4rem;
   background-position: center left;
