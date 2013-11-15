@@ -26,7 +26,7 @@
       // is the method we need. However, we need to figure out if
       // error was due to wrong email, or network connection
       var params = {
-        registered: true
+        registered: email !== 'newuser@newuser.com'
       };
       _mockBehaviour(onsuccess, onerror, params);
     },
