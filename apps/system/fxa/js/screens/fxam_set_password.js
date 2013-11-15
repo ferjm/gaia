@@ -12,25 +12,27 @@ FxaModuleSetPassword = (function() {
     return passwordValue && passwordEl.validity.valid;
   }
 
-  function showInvalidPassword() {
+  function _showInvalidPassword() {
     FxaModuleErrorOverlay.show(_('invalidPassword'));
   }
 
-  function setPassword(email, password, done) {
-    // TODO - hook up to client lib to stage a user.
-    if (password === 'password') return done(true);
-    done(false);
+  function _requestCreateAccount(email, password, done) {
+    FxModuleServerRequest.createAccount(email, password,
+      function(response) {
+        done(response.accountCreated);
+      },
+      done.bind(null, false));
   }
 
-  function showRegistering() {
+  function _showRegistering() {
     FxaModuleOverlay.show(_('registering'));
   }
 
-  function hideRegistering() {
+  function _hideRegistering() {
     FxaModuleOverlay.hide();
   }
 
-  function showPasswordNotSet() {
+  function _showUserNotCreated() {
     FxaModuleErrorOverlay.show(_('cannotCreateAccount'));
   }
 
@@ -63,20 +65,21 @@ FxaModuleSetPassword = (function() {
     var passwordEl = this.fxaPwInput;
 
     if (! isPasswordValid(passwordEl)) {
-      return showInvalidPassword();
+      _showInvalidPassword();
+      return;
     }
 
-    var passwordValue = passwordEl.value;
-    showRegistering();
-    setPassword(this.email, passwordValue, function(isPasswordSet) {
-      hideRegistering();
-      if (! isPasswordSet) {
-        return showPasswordNotSet();
+    var password = passwordEl.value;
+    _showRegistering();
+    _requestCreateAccount(this.email, password, function(isAccountCreated) {
+      _hideRegistering();
+      if (! isAccountCreated) {
+        _showUserNotCreated();
+        return;
       }
 
-      this.passwordValue = passwordValue;
       gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
-    }.bind(this));
+    });
   };
 
   return Module;
