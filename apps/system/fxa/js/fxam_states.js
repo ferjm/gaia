@@ -8,10 +8,6 @@ FxaModuleStates = (function() {
   // corresponding screen.
 
   return {
-    INTRO: {
-      id: 'fxa-intro',
-      module: 'FxaModuleIntro'
-    },
     ENTER_EMAIL: {
       id: 'fxa-email',
       module: 'FxaModuleEnterEmail'
