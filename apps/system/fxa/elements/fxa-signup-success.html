@@ -1,14 +1,17 @@
 <element name="fxa-signup-success" extends="section">
   <template>
     <section class="vertical">
-      <h2>
-        Success!
-      </h2>
-      <p data-l10n-id="fxa-signin-success-ready-to-go">
-        <a id="fxa-summary-email"></a>, your Firefox Account is ready to go!
+      <h3 data-l10n-id="fxa-confirm-account">
+        Confirm Your Account
+      </h3>
+      <p data-l10n-id="fxa-sending-email-to" class="fxa-envelope">
+        We will send an email to: <strong id="fxa-summary-email">email</strong>
       </p>
-      <p data-l10n-id="fxa-signin-success-use-services">
-        Now you can use <span id="ff_account--success-email">cookies</span> to access services like Marketplace and Where’s My Fox.
+      <p data-l10n-id="fxa-signup-click-link-in-email">
+        Next time you check your email, click the verification link to confirm your Firefox account.
+      </p>
+      <p data-l10n-id="fxa-manage-account-settings">
+        In the future, you can access and manage your account from your phone's settings.
       </p>
       <img class="fxa-logo small" src="style/ff_account_logo.png">
       <script src='js/screens/fxam_signup_success.js'></script>

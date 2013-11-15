@@ -13,7 +13,7 @@ FxaModuleSetPassword = (function() {
   }
 
   function _showInvalidPassword() {
-    FxaModuleErrorOverlay.show(_('invalidPassword'));
+    FxaModuleErrorOverlay.show(_('fxa-invalid-password'));
   }
 
   function _requestCreateAccount(email, password, done) {
@@ -25,7 +25,7 @@ FxaModuleSetPassword = (function() {
   }
 
   function _showRegistering() {
-    FxaModuleOverlay.show(_('registering'));
+    FxaModuleOverlay.show(_('fxa-registering'));
   }
 
   function _hideRegistering() {
@@ -33,7 +33,7 @@ FxaModuleSetPassword = (function() {
   }
 
   function _showUserNotCreated() {
-    FxaModuleErrorOverlay.show(_('cannotCreateAccount'));
+    FxaModuleErrorOverlay.show(_('fxa-cannot-create-account'));
   }
 
   function togglePasswordVisibility() {
