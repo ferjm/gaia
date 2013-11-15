@@ -35,6 +35,18 @@
         authenticated: true
       };
       _mockBehaviour(onsuccess, onerror, params);
+    },
+    createAccount: function(email, password, onsuccess, onerror) {
+      var params = {
+        accountCreated: true
+      };
+      _mockBehaviour(onsuccess, onerror, params);
+    },
+    requestPasswordReset: function(email, onsuccess, onerror) {
+      var params = {
+        success: true
+      };
+      _mockBehaviour(onsuccess, onerror, params);
     }
   };
   exports.FxModuleServerRequest = FxModuleServerRequest;
