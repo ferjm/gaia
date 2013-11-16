@@ -55,7 +55,7 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
         port.onmessage = function onMessage(evt) {
           if (evt && evt.data) {
             var realMessage = evt.data;
-            if (realMessage.data) {
+            if (typeof realMessage.data !== 'undefined') {
               successCb(realMessage.data);
             } else {
               var errorType = realMessage.error || 'Unknown';
