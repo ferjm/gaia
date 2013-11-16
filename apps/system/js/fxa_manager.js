@@ -51,7 +51,7 @@ var FxAccountsManager = {
     // Set up the listener for IAC API connection requests.
     window.addEventListener('iac-fxa-mgmt', this.onPortMessage);
     // Listen for chrome events coming from the implementation of RP DOM API.
-    window.addEventListener('mozChromeEvent', this.onChromeEvent);
+    window.addEventListener('mozFxAccountsChromeEvent', this);
   },
 
   onPortMessage: function fxa_mgmt_onPortMessage(event) {
@@ -88,12 +88,18 @@ var FxAccountsManager = {
     }
   },
 
-  onChromeEvent: function fxa_mgmt_onChromeEvent(event) {
+  handleEvent: function fxa_mgmt_handleEvent(event) {
     var message = event.detail;
 
-    if (message.type != 'fxa-service') {
-      // TODO: handle chrome event when a non-certified RP wants to sign in.
-      // We need to trigger the FxAUI flow.
+    if (!message.type || message.type != 'rp' || !message.id) {
+      return;
+    }
+
+    switch (message.method) {
+      case 'getUserPermission':
+        break;
+      case 'openFlow':
+        break;
     }
   }
 };
