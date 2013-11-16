@@ -39,11 +39,13 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
   // to a single manifest.
   var sendMessage = function sendMessage(message, successCb, errorCb) {
     getSelf(function onApp(app) {
+      if (!errorCb || typeof errorCb !== 'function') {
+        errorCb = function() {};
+      }
+
       app.connect(CONNECTION_STRING, rules).then(function(ports) {
         if (!ports || ports.length !== 1) {
-          if (errorCb && typeof(errorCb) === 'function') {
-            errorCb();
-          }
+          errorCb();
           return;
         }
 
@@ -53,7 +55,7 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
         port.onmessage = function onMessage(evt) {
           if (evt && evt.data) {
             var realMessage = evt.data;
-            if (realMessage.data) {
+            if (typeof realMessage.data !== 'undefined') {
               successCb(realMessage.data);
             } else {
               var errorType = realMessage.error || 'Unknown';
@@ -79,17 +81,9 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
     }, successCb, errorCb);
   };
 
-  var logout = function logout(accountId, successCb, errorCb) {
+  var logout = function logout(successCb, errorCb) {
     sendMessage({
-      'name': 'logout',
-      'accountId': accountId
-    }, successCb, errorCb);
-  };
-
-  var deleteAccount = function deleteAccount(accountId, successCb, errorCb) {
-    sendMessage({
-      'name': 'delete',
-      'accountId': accountId
+      'name': 'logout'
     }, successCb, errorCb);
   };
 
@@ -117,7 +111,6 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
 
   return {
     'changePassword': changePassword,
-    'deleteAccount': deleteAccount,
     'getAccounts': getAccounts,
     'init': init,
     'logout': logout,

@@ -13,6 +13,10 @@ function getIssuerName() {
   return document.getElementById('issuer-name').value.trim();
 }
 
+function getWantIssuerName() {
+  return document.getElementById('wantIssuer-name').value.trim();
+}
+
 function unpackAssertion(assertion) {
   var parts = assertion.split('.');
   return {
@@ -54,11 +58,13 @@ function IdentityTests() {
   };
 
   this._setupCallbacks = function id__setupCallbacks() {
-    if (this._running) return;
     var self = this;
+    var wantIssuer = getWantIssuerName();
     try {
       navigator.mozId.watch({
         loggedInUser: null,
+
+        wantIssuer: wantIssuer,
 
         onlogin: function(assertion) {
           var unpacked = JSON.stringify(unpackAssertion(assertion), null, 2);
@@ -71,12 +77,22 @@ function IdentityTests() {
 
         onready: function() {
           self.recordEvent('ready', 'ready');
+          self._enableButtons();
         }
-
       });
     } catch (err) {
       this.recordEvent('Error: ' + err, 'error');
     }
+  };
+
+  this._enableButtons = function id__enableButtons() {
+    ['t-request', 't-request-withOnCancel',
+     't-request-allowUnverified', 't-request-forceIssuer',
+     't-request-forceIssuer-allowUnverified',
+     't-request-wantIssuer',
+     't-logout'].forEach(function(selector) {
+      document.getElementById(selector).disabled = false;
+    });
   };
 
   /**
@@ -86,12 +102,17 @@ function IdentityTests() {
     if (this._running) return;
     var self = this;
     var testElementHandlers = {
+      't-watch': function() {
+        self._setupCallbacks();
+       },
       't-request': function() {
         navigator.mozId.request();
       },
 
       't-request-withOnCancel': function() {
-        navigator.mozId.request({oncancel: function() { self.recordEvent('cancel', 'cancel') }});
+        navigator.mozId.request({
+          oncancel: function() { self.recordEvent('cancel', 'cancel') }
+        });
       },
 
       't-request-allowUnverified': function() {
@@ -113,6 +134,12 @@ function IdentityTests() {
         });
       },
 
+      't-request-wantIssuer': function() {
+        navigator.mozId.request({
+          wantIssuer: getWantIssuerName()
+        });
+      },
+
       't-logout': function() {
         navigator.mozId.logout();
       }
@@ -125,7 +152,6 @@ function IdentityTests() {
   };
 
   this.init = function id_init() {
-    this._setupCallbacks();
     this._bindEvents();
     this._running = true;
 
