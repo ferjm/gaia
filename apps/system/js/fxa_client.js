@@ -16,7 +16,7 @@ var FxAccountsClient = function FxAccountsClient() {
 
   var sendMessage = function sendMessage(message, successCb, errorCb) {
     if (!eventCount) {
-      window.addEventListener('mozChromeEvent', onChromeEvent);
+      window.addEventListener('mozFxAccountsChromeEvent', onChromeEvent);
     }
 
     var id = getUUID();
@@ -27,12 +27,11 @@ var FxAccountsClient = function FxAccountsClient() {
 
     var details = {
       id: id,
-      type: 'fxa-service',
       data: message
     };
 
     var event = document.createEvent('CustomEvent');
-    event.initCustomEvent('mozContentEvent', true, true, details);
+    event.initCustomEvent('mozFxAccountsContentEvent', true, true, details);
     window.dispatchEvent(event);
 
     eventCount++;
@@ -41,12 +40,13 @@ var FxAccountsClient = function FxAccountsClient() {
   var onChromeEvent = function onChromeEvent(event) {
     var message = event.detail;
 
-    if (message.type != 'fxa-service' || !message.id) {
+    if (!message.id) {
+      console.log('Got mozFxAccountsChromeEvent with no id');
       return;
     }
 
     var callback = callbacks[message.id];
-    if (message.data &&
+    if (typeof message.data !== 'undefined' &&
         callback.successCb && callback.successCb instanceof Function) {
       callback.successCb(message.data);
       delete callbacks[message.id];
@@ -58,7 +58,7 @@ var FxAccountsClient = function FxAccountsClient() {
 
     eventCount--;
     if (!eventCount) {
-      window.removeEventListener('mozChromeEvent', onChromeEvent);
+      window.removeEventListener('mozFxAccountsChromeEvent', onChromeEvent);
     }
   };
 
