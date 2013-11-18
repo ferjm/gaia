@@ -51,7 +51,7 @@ var FxAccountsManager = {
     // Set up the listener for IAC API connection requests.
     window.addEventListener('iac-fxa-mgmt', this.onPortMessage);
     // Listen for chrome events coming from the implementation of RP DOM API.
-    window.addEventListener('mozFxAccountsChromeEvent', this);
+    window.addEventListener('mozFxAccountsRPChromeEvent', this);
   },
 
   onPortMessage: function fxa_mgmt_onPortMessage(event) {
@@ -88,17 +88,33 @@ var FxAccountsManager = {
     }
   },
 
+  _sendContentEvent: function fxa_mgmt_sendContentEvent(aMsg) {
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('mozFxAccountsRPContentEvent', true, true, aMsg);
+    window.dispatchEvent(event);
+  },
+
   handleEvent: function fxa_mgmt_handleEvent(event) {
     var message = event.detail;
 
-    if (!message.type || message.type != 'rp' || !message.id) {
+    if (!message.id) {
+      console.log('Got chrome event without id!');
       return;
     }
 
     switch (message.method) {
-      case 'getUserPermission':
-        break;
       case 'openFlow':
+        FxUI.login(function(result) {
+          FxAccountsManager._sendContentEvent({
+            id: message.id,
+            result: result
+          });
+        }, function(error) {
+          FxAccountsManager._sendContentEvent({
+            id: message.id,
+            error: error
+          });
+        });
         break;
     }
   }

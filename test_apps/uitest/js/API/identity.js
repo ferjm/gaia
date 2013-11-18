@@ -13,6 +13,10 @@ function getIssuerName() {
   return document.getElementById('issuer-name').value.trim();
 }
 
+function getWantIssuerName() {
+  return document.getElementById('wantIssuer-name').value.trim();
+}
+
 function unpackAssertion(assertion) {
   var parts = assertion.split('.');
   return {
@@ -53,12 +57,19 @@ function IdentityTests() {
     this._eventNum += 1;
   };
 
-  this._setupCallbacks = function id__setupCallbacks() {
-    if (this._running) return;
+  this._setupCallbacks = function id__setupCallbacks(aCallback) {
+    if (this._alreadySetup) {
+      if (aCallback && aCallback instanceof Function) {
+        aCallback();
+      }
+      return;
+    }
     var self = this;
     try {
       navigator.mozId.watch({
         loggedInUser: null,
+
+        wantIssuer: 'firefox-accounts',
 
         onlogin: function(assertion) {
           var unpacked = JSON.stringify(unpackAssertion(assertion), null, 2);
@@ -72,8 +83,12 @@ function IdentityTests() {
         onready: function() {
           self.recordEvent('ready', 'ready');
         }
-
       });
+
+      if (aCallback && aCallback instanceof Function) {
+        aCallback();
+      }
+
     } catch (err) {
       this.recordEvent('Error: ' + err, 'error');
     }
@@ -87,34 +102,52 @@ function IdentityTests() {
     var self = this;
     var testElementHandlers = {
       't-request': function() {
-        navigator.mozId.request();
+        self._setupCallbacks(navigator.mozId.request);
       },
 
       't-request-withOnCancel': function() {
-        navigator.mozId.request({oncancel: function() { self.recordEvent('cancel', 'cancel') }});
+        self._setupCallbacks(function() {
+          navigator.mozId.request({
+            oncancel: function() { self.recordEvent('cancel', 'cancel') }
+          });
+        });
       },
 
       't-request-allowUnverified': function() {
-        navigator.mozId.request({
-          allowUnverified: getUnverifiedOk()
+        self._setupCallbacks(function() {
+          navigator.mozId.request({
+            allowUnverified: getUnverifiedOk()
+          });
         });
       },
 
       't-request-forceIssuer': function() {
-        navigator.mozId.request({
-          forceIssuer: getIssuerName()
+        self._setupCallbacks(function() {
+          navigator.mozId.request({
+            forceIssuer: getIssuerName()
+          });
         });
       },
 
       't-request-forceIssuer-allowUnverified': function() {
-        navigator.mozId.request({
-          allowUnverified: getUnverifiedOk(),
-          forceIssuer: getIssuerName()
+        self._setupCallbacks(function() {
+          navigator.mozId.request({
+            allowUnverified: getUnverifiedOk(),
+            forceIssuer: getIssuerName()
+          });
+        });
+      },
+
+      't-request-wantIssuer': function() {
+        self._setupCallbacks(function() {
+          navigator.mozId.request({
+            wantIssuer: getWantIssuerName()
+          });
         });
       },
 
       't-logout': function() {
-        navigator.mozId.logout();
+        self._setupCallbacks(navigator.mozId.logout);
       }
     };
 
@@ -125,7 +158,6 @@ function IdentityTests() {
   };
 
   this.init = function id_init() {
-    this._setupCallbacks();
     this._bindEvents();
     this._running = true;
 
