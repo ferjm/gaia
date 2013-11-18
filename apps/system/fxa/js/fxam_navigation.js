@@ -5,24 +5,7 @@ var FxaModuleNavigation = {
   currentModule: null,
   init: function(flow) {
     // Listen on hash changes for panel changes
-    var self = this;
-    window.addEventListener('hashchange', function() {
-      if (!location.hash)
-        return;
-
-      var panel = document.querySelector(location.hash);
-      if (!panel || !panel.classList.contains('screen'))
-        return;
-
-      if (self.backAnim) {
-        self.backAnim = false;
-        self.stepCount--;
-        self.loadStep(panel, true);
-      } else {
-        self.stepCount++;
-        self.loadStep(panel);
-      }
-    }, false);
+    window.addEventListener('hashchange', this._hashChange.bind(this), false);
 
     // Load view
     LazyLoader._js('view/view_' + flow + '.js', function loaded() {
@@ -30,19 +13,38 @@ var FxaModuleNavigation = {
       // do we need this?
       FxaModuleUI.setMaxSteps(View.length);
       window.location.hash = View.start.id;
-    }.bind(this));
+    });
   },
+
+  _hashChange: function() {
+    if (!location.hash)
+      return;
+
+    var panel = document.querySelector(location.hash);
+    if (!panel || !panel.classList.contains('screen'))
+      return;
+
+    if (this.backAnim) {
+      this.backAnim = false;
+      this.stepCount--;
+      this.loadStep(panel, true);
+    } else {
+      this.stepCount++;
+      this.loadStep(panel);
+    }
+  },
+
   loadStep: function(panel, back) {
     if (!panel)
       return;
-    var self = this;
     FxaModuleUI.loadScreen({
       panel: panel,
       count: this.stepCount,
       back: back,
       onload: function() {
         this.currentModule = window[this.moduleById(panel.id)];
-        this.currentModule.init &&
+
+        if (this.currentModule && this.currentModule.init)
           this.currentModule.init(FxaModuleManager.paramsRetrieved);
       }.bind(this),
       onanimate: function() {
@@ -57,14 +59,15 @@ var FxaModuleNavigation = {
       return;
     }
     this.updatingStep = true;
+
     // Execute module back (if is defined)
-    this.currentModule.onBack && this.currentModule.onBack();
+    if (this.currentModule && this.currentModule.onBack)
+      this.currentModule.onBack();
+
     // Go to previous step
     this.backAnim = true;
 
     window.history.back();
-
-
   },
   next: function() {
     // TODO Add shield against multiple taps
@@ -73,7 +76,9 @@ var FxaModuleNavigation = {
         return;
       location.hash = nextStep.id;
     };
-    this.currentModule.onNext(loadNextStep.bind(this));
+
+    if (this.currentModule && this.currentModule.onNext)
+      this.currentModule.onNext(loadNextStep.bind(this));
   },
   moduleById: function(id) {
     // TODO (Olav): Make states easier to look up :)

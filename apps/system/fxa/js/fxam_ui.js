@@ -39,39 +39,59 @@ var FxaModuleUI = {
     var nextScreen = params.panel;
     // Lazy load current panel
     LazyLoader.load(nextScreen, function() {
-      // If the panel contains any new script elements,
-      // lazy load those as well.
-      var scripts = [].slice.call(nextScreen.querySelectorAll('script'))
-        .map(function(script) { return script.getAttribute('src'); });
-
-      // Once all scripts are loaded, load the modules/UI
-      LazyLoader.load(scripts, function() {
-        if (params.count > 1 && params.count < FxaModuleUI.maxSteps) {
-          FxaModuleUI.navigation.classList.remove('navigation-single-button');
-          FxaModuleUI.navigation.classList.remove('navigation-back-only');
-
-          if (nextScreen.getAttribute('data-navigation') === 'back') {
-            FxaModuleUI.navigation.classList.add('navigation-back-only');
-          }
-        } else {
-          FxaModuleUI.navigation.classList.add('navigation-single-button');
-          if (params.count === FxaModuleUI.maxSteps) {
-            FxaModuleUI.navigation.classList.add('navigation-done');
-          }
-        }
-        this.progress(100 * params.count / this.maxSteps);
-
+      this._loadScripts(nextScreen, function scriptsLoaded() {
+        this._doUiTransition(params, currentScreen, nextScreen);
         params.onload && params.onload();
-
-        if (nextScreen) {
-          this._animate(currentScreen,
-                        nextScreen,
-                        params.back,
-                        params.onanimate);
-        }
       }.bind(this));
     }.bind(this));
   },
+
+  _getScripts: function(screen) {
+    return [].slice.call(screen.querySelectorAll('script'))
+      .map(function(script) { return script.getAttribute('src'); });
+  },
+
+  _loadScripts: function(screen, done) {
+    var scripts = this._getScripts(screen);
+
+    // LazyLoader only calls the callback if there are scripts to load. If
+    // there are not scripts to load, avoid the lazy loader.
+    if (! scripts.length) {
+      return done();
+    }
+
+    LazyLoader.load(scripts, done);
+  },
+
+  _doUiTransition: function(params, currentScreen, nextScreen) {
+    this._updateNavigation(params, nextScreen);
+
+    this.progress(100 * params.count / this.maxSteps);
+
+    if (nextScreen) {
+      this._animate(currentScreen,
+                    nextScreen,
+                    params.back,
+                    params.onanimate);
+    }
+  },
+
+  _updateNavigation: function(params, nextScreen) {
+    if (params.count > 1 && params.count < FxaModuleUI.maxSteps) {
+      FxaModuleUI.navigation.classList.remove('navigation-single-button');
+      FxaModuleUI.navigation.classList.remove('navigation-back-only');
+
+      if (nextScreen.getAttribute('data-navigation') === 'back') {
+        FxaModuleUI.navigation.classList.add('navigation-back-only');
+      }
+    } else {
+      FxaModuleUI.navigation.classList.add('navigation-single-button');
+      if (params.count === FxaModuleUI.maxSteps) {
+        FxaModuleUI.navigation.classList.add('navigation-done');
+      }
+    }
+  },
+
   _animate: function(from, to, back, callback) {
     if (!to)
       return;
