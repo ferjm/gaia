@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = navigator.mozL10n.get;
+
 var FxaModuleErrorOverlay = {
   show: function fxam_error_overlay_show(title, message) {
     var overlayEl = document.querySelector('#fxa-error-overlay');
