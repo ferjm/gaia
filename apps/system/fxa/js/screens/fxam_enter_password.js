@@ -123,20 +123,23 @@ FxaModuleEnterPassword = (function() {
   Module.onNext = function onNext(gotoNextStepCallback) {
     FxaModuleOverlay.show(_('fxa-authenticating'));
 
-    FxModuleServerRequest.checkPassword(
+    FxModuleServerRequest.signIn(
       this.email,
       this.fxaPwInput.value,
-      function onServerResponse(response) {
+      function onSuccess(response) {
         FxaModuleOverlay.hide();
-        if (response.authenticated) {
-          _loadSigninSuccess(gotoNextStepCallback);
-        } else {
-          _showPasswordMismatch();
-        }
+        _loadSigninSuccess(gotoNextStepCallback);
       },
-      function onNetworkError() {
+      function onError(response) {
         FxaModuleOverlay.hide();
-        _showAuthenticationError();
+        switch (response.error) {
+          case 'INVALID_PASSWORD':
+            _showPasswordMismatch();
+            break;
+          default:
+            _showAuthenticationError();
+            break;
+        }
       }
     );
   };

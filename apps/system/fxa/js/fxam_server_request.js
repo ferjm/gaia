@@ -19,21 +19,34 @@
     }, 1000);
   }
 
+  function logSuccess(callback) {
+    return function(response) {
+      console.log('**** success: ' + JSON.stringify(response, null, 2));
+      callback(response);
+    };
+  }
+
+  function logError(callback) {
+    return function(response) {
+      console.error('**** error: ' + JSON.stringify(response, null, 2));
+      callback(response);
+    };
+  }
+
   var FxModuleServerRequest = {
     checkEmail: function(email, onsuccess, onerror) {
       window.parent.LazyLoader.load('../js/fxa_client.js', function() {
-        window.parent.FxAccountsClient.queryAccount(email, onsuccess, onerror);
+        window.parent.FxAccountsClient.queryAccount(
+                email, logSuccess(onsuccess), logError(onerror));
       });
     },
-    checkPassword: function(email, password, onsuccess, onerror) {
-      var params = {
-        authenticated: true
-      };
-      _mockBehaviour(onsuccess, onerror, params);
+    signIn: function(email, password, onsuccess, onerror) {
+      window.parent.FxAccountsClient.signIn(
+                email, password, logSuccess(onsuccess), logError(onerror));
     },
-    createAccount: function(email, password, onsuccess, onerror) {
-      window.parent.FxAccountsClient.signUp(email, password,
-                                            onsuccess, onerror);
+    signUp: function(email, password, onsuccess, onerror) {
+      window.parent.FxAccountsClient.signUp(
+                email, password, logSuccess(onsuccess), logError(onerror));
     },
     requestPasswordReset: function(email, onsuccess, onerror) {
       var params = {
