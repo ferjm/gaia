@@ -63,22 +63,16 @@ FxaModuleEnterEmail = (function() {
 
     FxModuleServerRequest.checkEmail(
       email,
-      function onServerResponse(response) {
+      function onSuccess(response) {
         FxaModuleOverlay.hide();
         FxaModuleManager.setParam('email', email);
-        if (response.registered) {
+        if (response && response.registered) {
           _loadSignIn(gotoNextStepCallback);
         } else {
           _loadSignUp(gotoNextStepCallback);
         }
       },
-      function onNetworkError() {
-        FxaModuleOverlay.hide();
-        FxaModuleErrorOverlay.show(
-          _('fxa-checking-email-error-title'),
-          _('fxa-checking-email-error-message'));
-      }
-    );
+      this.showErrorResponse);
   };
 
   Module.onBack = function onBack() {

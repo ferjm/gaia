@@ -12,16 +12,11 @@ FxaModuleSetPassword = (function() {
     return passwordValue && passwordEl.validity.valid;
   }
 
-  function _showInvalidPassword() {
-    FxaModuleErrorOverlay.show(_('fxa-invalid-password'));
-  }
-
   function _requestCreateAccount(email, password, done) {
     FxModuleServerRequest.signUp(email, password,
       function onSuccess(response) {
         done(response.accountCreated);
-      },
-      done.bind(null, false));
+      }, this.showErrorResponse);
   }
 
   function _showRegistering() {
@@ -33,7 +28,9 @@ FxaModuleSetPassword = (function() {
   }
 
   function _showUserNotCreated() {
-    FxaModuleErrorOverlay.show(_('fxa-cannot-create-account'));
+    this.showErrorResponse({
+      error: 'CANNOT_CREATE_ACCOUNT'
+    });
   }
 
   function togglePasswordVisibility() {
@@ -62,24 +59,23 @@ FxaModuleSetPassword = (function() {
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    var passwordEl = this.fxaPwInput;
-
-    if (! isPasswordValid(passwordEl)) {
-      _showInvalidPassword();
-      return;
-    }
-
-    var password = passwordEl.value;
+    var password = this.fxaPwInput.value;
     _showRegistering();
-    _requestCreateAccount(this.email, password, function(isAccountCreated) {
-      _hideRegistering();
-      if (! isAccountCreated) {
-        _showUserNotCreated();
-        return;
-      }
+    _requestCreateAccount.call(
+      this,
+      this.email,
+      password,
+      function(isAccountCreated) {
+        _hideRegistering();
 
-      gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
-    });
+        if (! isAccountCreated) {
+          _showUserNotCreated.call(this);
+          return;
+        }
+
+        gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
+      }
+    );
   };
 
   return Module;
