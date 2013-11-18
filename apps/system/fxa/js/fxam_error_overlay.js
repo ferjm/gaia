@@ -9,8 +9,8 @@ var FxaModuleErrorOverlay = {
     if (! (overlayEl && titleEl && messageEl))
       return;
 
-    titleEl.textContent = title;
-    messageEl.textContent = message;
+    titleEl.textContent = title || '';
+    messageEl.textContent = message || '';
 
     overlayEl.classList.add('show');
 
@@ -20,6 +20,21 @@ var FxaModuleErrorOverlay = {
       'submit',
       this.prevent
     );
+  },
+
+  showResponse: function fxam_show_for_response(response) {
+    LazyLoader.load('js/fxam_errors.js', function() {
+      var config = FxaModuleErrors.responseToConfig(response);
+
+      if (!config) {
+        config = {
+          title: _('fxa-unknown-error'),
+          message: JSON.stringify(response, null, 2)
+        };
+      }
+
+      this.show(config.title, config.message);
+    }.bind(this));
   },
 
   hide: function fxam_overlay_hide() {

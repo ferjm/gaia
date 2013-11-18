@@ -17,11 +17,20 @@ FxaModuleSetPassword = (function() {
   }
 
   function _requestCreateAccount(email, password, done) {
+    _showRegistering();
     FxModuleServerRequest.signUp(email, password,
       function onSuccess(response) {
+        _hideRegistering();
+        if (!response.accountCreated)
+          _showUserNotCreated();
+
         done(response.accountCreated);
       },
-      done.bind(null, false));
+      function onError(response) {
+        _hideRegistering();
+
+        FxaModuleErrorOverlay.showResponse(response);
+      });
   }
 
   function _showRegistering() {
@@ -70,15 +79,10 @@ FxaModuleSetPassword = (function() {
     }
 
     var password = passwordEl.value;
-    _showRegistering();
     _requestCreateAccount(this.email, password, function(isAccountCreated) {
-      _hideRegistering();
-      if (! isAccountCreated) {
-        _showUserNotCreated();
-        return;
+      if (isAccountCreated) {
+        gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
       }
-
-      gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
     });
   };
 

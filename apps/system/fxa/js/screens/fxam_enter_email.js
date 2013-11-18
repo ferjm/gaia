@@ -58,7 +58,7 @@ FxaModuleEnterEmail = (function() {
 
     FxModuleServerRequest.checkEmail(
       email,
-      function onServerResponse(response) {
+      function onSuccess(response) {
         FxaModuleOverlay.hide();
         FxaModuleManager.setParam('email', email);
         if (response.registered) {
@@ -67,11 +67,9 @@ FxaModuleEnterEmail = (function() {
           _loadSignUp(gotoNextStepCallback);
         }
       },
-      function onNetworkError() {
+      function onError(response) {
         FxaModuleOverlay.hide();
-        FxaModuleErrorOverlay.show(
-          _('fxa-checking-email-error-title'),
-          _('fxa-checking-email-error-message'));
+        FxaModuleErrorOverlay.showResponse(response);
       }
     );
   };

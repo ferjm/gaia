@@ -22,20 +22,6 @@ FxaModuleEnterPassword = (function() {
     }
   }
 
-  function _showAuthenticationError() {
-    FxaModuleErrorOverlay.show(
-      _('fxa-authenticating-error-title'),
-      _('fxa-authenticating-error-message')
-    );
-  }
-
-  function _showPasswordMismatch() {
-    FxaModuleErrorOverlay.show(
-      _('fxa-invalid-password'),
-      _('fxa-cannot-authenticate')
-    );
-  }
-
   function _loadSigninSuccess(done) {
     done(FxaModuleStates.SIGNIN_SUCCESS);
   }
@@ -46,11 +32,16 @@ FxaModuleEnterPassword = (function() {
   }
 
   function _requestPasswordReset(email, done) {
+    FxaModuleOverlay.show(_('fxa-requesting-password-reset'));
     FxModuleServerRequest.requestPasswordReset(email,
-      function(response) {
+      function onSuccess(response) {
+        FxaModuleOverlay.hide();
         done(response.success);
       },
-      done.bind(null, false));
+      function onError(response) {
+        FxaModuleOverlay.hide();
+        FxaModuleErrorOverlay.showResponse(response);
+      });
   }
 
   function _showCouldNotResetPassword() {
@@ -58,9 +49,7 @@ FxaModuleEnterPassword = (function() {
   }
 
   function _forgotPassword() {
-    FxaModuleOverlay.show(_('fxa-requesting-password-reset'));
     _requestPasswordReset(this.email, function(isRequestHandled) {
-      FxaModuleOverlay.hide();
       if (!isRequestHandled) {
         _showCouldNotResetPassword();
         return;
@@ -122,26 +111,22 @@ FxaModuleEnterPassword = (function() {
 
   Module.onNext = function onNext(gotoNextStepCallback) {
     FxaModuleOverlay.show(_('fxa-authenticating'));
-
     FxModuleServerRequest.signIn(
       this.email,
       this.fxaPwInput.value,
       function onSuccess(response) {
         FxaModuleOverlay.hide();
+        if (!response.accountId) {
+          FxaModuleErrorOverlay.showResponse(_('fxa-cannot-authenticate'));
+          return;
+        }
+
         _loadSigninSuccess(gotoNextStepCallback);
       },
       function onError(response) {
         FxaModuleOverlay.hide();
-        switch (response.error) {
-          case 'INVALID_PASSWORD':
-            _showPasswordMismatch();
-            break;
-          default:
-            _showAuthenticationError();
-            break;
-        }
-      }
-    );
+        FxaModuleErrorOverlay.showResponse(response);
+      });
   };
 
   return Module;
