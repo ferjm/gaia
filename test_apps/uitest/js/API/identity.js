@@ -57,19 +57,14 @@ function IdentityTests() {
     this._eventNum += 1;
   };
 
-  this._setupCallbacks = function id__setupCallbacks(aCallback) {
-    if (this._alreadySetup) {
-      if (aCallback && aCallback instanceof Function) {
-        aCallback();
-      }
-      return;
-    }
+  this._setupCallbacks = function id__setupCallbacks() {
     var self = this;
+    var wantIssuer = getWantIssuerName();
     try {
       navigator.mozId.watch({
         loggedInUser: null,
 
-        wantIssuer: 'firefox-accounts',
+        wantIssuer: wantIssuer,
 
         onlogin: function(assertion) {
           var unpacked = JSON.stringify(unpackAssertion(assertion), null, 2);
@@ -82,16 +77,22 @@ function IdentityTests() {
 
         onready: function() {
           self.recordEvent('ready', 'ready');
+          self._enableButtons();
         }
       });
-
-      if (aCallback && aCallback instanceof Function) {
-        aCallback();
-      }
-
     } catch (err) {
       this.recordEvent('Error: ' + err, 'error');
     }
+  };
+
+  this._enableButtons = function id__enableButtons() {
+    ['t-request', 't-request-withOnCancel',
+     't-request-allowUnverified', 't-request-forceIssuer',
+     't-request-forceIssuer-allowUnverified',
+     't-request-wantIssuer',
+     't-logout'].forEach(function(selector) {
+      document.getElementById(selector).disabled = false;
+    });
   };
 
   /**
@@ -101,53 +102,46 @@ function IdentityTests() {
     if (this._running) return;
     var self = this;
     var testElementHandlers = {
+      't-watch': function() {
+        self._setupCallbacks();
+       },
       't-request': function() {
-        self._setupCallbacks(navigator.mozId.request);
+        navigator.mozId.request();
       },
 
       't-request-withOnCancel': function() {
-        self._setupCallbacks(function() {
-          navigator.mozId.request({
-            oncancel: function() { self.recordEvent('cancel', 'cancel') }
-          });
+        navigator.mozId.request({
+          oncancel: function() { self.recordEvent('cancel', 'cancel') }
         });
       },
 
       't-request-allowUnverified': function() {
-        self._setupCallbacks(function() {
-          navigator.mozId.request({
-            allowUnverified: getUnverifiedOk()
-          });
+        navigator.mozId.request({
+          allowUnverified: getUnverifiedOk()
         });
       },
 
       't-request-forceIssuer': function() {
-        self._setupCallbacks(function() {
-          navigator.mozId.request({
-            forceIssuer: getIssuerName()
-          });
+        navigator.mozId.request({
+          forceIssuer: getIssuerName()
         });
       },
 
       't-request-forceIssuer-allowUnverified': function() {
-        self._setupCallbacks(function() {
-          navigator.mozId.request({
-            allowUnverified: getUnverifiedOk(),
-            forceIssuer: getIssuerName()
-          });
+        navigator.mozId.request({
+          allowUnverified: getUnverifiedOk(),
+          forceIssuer: getIssuerName()
         });
       },
 
       't-request-wantIssuer': function() {
-        self._setupCallbacks(function() {
-          navigator.mozId.request({
-            wantIssuer: getWantIssuerName()
-          });
+        navigator.mozId.request({
+          wantIssuer: getWantIssuerName()
         });
       },
 
       't-logout': function() {
-        self._setupCallbacks(navigator.mozId.logout);
+        navigator.mozId.logout();
       }
     };
 
