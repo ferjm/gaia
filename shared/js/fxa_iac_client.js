@@ -81,17 +81,9 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
     }, successCb, errorCb);
   };
 
-  var logout = function logout(accountId, successCb, errorCb) {
+  var logout = function logout(successCb, errorCb) {
     sendMessage({
-      'name': 'logout',
-      'accountId': accountId
-    }, successCb, errorCb);
-  };
-
-  var deleteAccount = function deleteAccount(accountId, successCb, errorCb) {
-    sendMessage({
-      'name': 'delete',
-      'accountId': accountId
+      'name': 'logout'
     }, successCb, errorCb);
   };
 
@@ -119,7 +111,6 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
 
   return {
     'changePassword': changePassword,
-    'deleteAccount': deleteAccount,
     'getAccounts': getAccounts,
     'init': init,
     'logout': logout,

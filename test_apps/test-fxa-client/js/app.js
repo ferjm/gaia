@@ -2,20 +2,18 @@
 
 var TestFxAClient = function TestFxAClient() {
 
-  var getFxAccountsButton, launchFxAFlowButton, logoutButton, deleteButton,
+  var getFxAccountsButton, launchFxAFlowButton, logoutButton,
       changePasswordButton;
 
   var init = function init() {
     getFxAccountsButton = document.getElementById('getAccounts');
     launchFxAFlowButton = document.getElementById('openFlow');
     logoutButton = document.getElementById('logout');
-    deleteButton = document.getElementById('deleteAccount');
     changePasswordButton = document.getElementById('changePassword');
 
     getFxAccountsButton.addEventListener('click', handler);
     launchFxAFlowButton.addEventListener('click', handler);
     logoutButton.addEventListener('click', handler);
-    deleteButton.addEventListener('click', handler);
     changePasswordButton.addEventListener('click', handler);
   };
 
@@ -28,10 +26,9 @@ var TestFxAClient = function TestFxAClient() {
     switch (method) {
       case 'getAccounts':
       case 'openFlow':
-        FxAccountsIACHelper[method](showResponse, showResponse);
-        break;
       case 'logout':
-      case 'deleteAccount':
+        FxAccountsIACHelper[method](showResponse, showError);
+        break;
       case 'changePassword':
         FxAccountsIACHelper[method]('dummy@domain.org', showResponse,
                                     showResponse);

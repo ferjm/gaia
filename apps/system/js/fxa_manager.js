@@ -79,7 +79,10 @@ var FxAccountsManager = {
         });
         break;
       case 'logout':
-      case 'delete':
+        LazyLoader.load('js/fxa_client.js', function() {
+          FxAccountsClient.logout(_successCb, _errorCb);
+        });
+        break;
       case 'changePassword':
         LazyLoader.load('js/fxa_ui.js', function() {
           FxAccountsUI.openFlow(message.name, message.accountId,
