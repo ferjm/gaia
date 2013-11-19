@@ -77,10 +77,9 @@ var FxAccountsManager = {
         FxUI.login(_successCb, _errorCb);
         break;
       case 'logout':
-
-        break;
-      case 'delete':
-
+        LazyLoader.load('js/fxa_client.js', function() {
+          FxAccountsClient.logout(_successCb, _errorCb);
+        });
         break;
       case 'changePassword':
 

@@ -84,26 +84,15 @@ var FxAccountsClient = function FxAccountsClient() {
     }, successCb, errorCb);
   };
 
-  var deleteAccount = function deleteAccount(accountId, password, successCb,
-                                             errorCb) {
-    sendMessage({
-      method: 'delete',
-      accountId: accountId,
-      password: password
-    }, successCb, errorCb);
-  };
-
   var getAccounts = function getAccounts(successCb, errorCb) {
     sendMessage({
       method: 'getAccounts'
     }, successCb, errorCb);
   };
 
-  var logout = function logout(accountId, password, successCb, errorCb) {
+  var logout = function logout(successCb, errorCb) {
     sendMessage({
-      method: 'logout',
-      accountId: accountId,
-      password: password
+      method: 'logout'
     }, successCb, errorCb);
   };
 
@@ -140,7 +129,6 @@ var FxAccountsClient = function FxAccountsClient() {
 
   return {
     'changePassword': changePassword,
-    'deleteAccount': deleteAccount,
     'getAccounts': getAccounts,
     'logout': logout,
     'queryAccount': queryAccount,
