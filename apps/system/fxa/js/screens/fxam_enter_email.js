@@ -3,10 +3,13 @@
  * determine which screen to go to next.
  */
 
+
+
 FxaModuleEnterEmail = (function() {
   'use strict';
 
-  var _ = navigator.mozL10n.get;
+
+  var _ = null;
 
   function _isEmailValid(emailEl) {
     return emailEl && emailEl.value && emailEl.validity.valid;
@@ -30,6 +33,8 @@ FxaModuleEnterEmail = (function() {
 
   var Module = Object.create(FxaModule);
   Module.init = function() {
+    _ = navigator.mozL10n.get;
+
     // Blocks the navigation until check the condition
     _enableNext(this.fxaEmailInput);
 

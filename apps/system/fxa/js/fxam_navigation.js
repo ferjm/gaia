@@ -25,7 +25,7 @@ var FxaModuleNavigation = {
     }, false);
 
     // Load view
-    LazyLoader._js('view/view_' + flow + '.js', function loaded() {
+    LazyLoader.load('view/view_' + flow + '.js', function loaded() {
       // TODO Check how to load maxSteps,
       // do we need this?
       FxaModuleUI.setMaxSteps(View.length);
