@@ -89,10 +89,38 @@ suite('IACHandler > ', function() {
     });
   });
 
+  suite('connect to fxa-mgmt', function() {
+    var request;
+    var fakePort = new FakePort;
+
+    setup(function() {
+
+      request = {
+        keyword: 'fxa-mgmt',
+        port: fakePort
+      };
+
+      // pretend Gecko call this event somewhere
+      MockMozSetMessageHandler_listeners['connection'](request);
+    });
+
+    test('IACHandler can send to mediacomms successfully', function() {
+      var message = {
+        method: 'getAccounts'
+      };
+
+      fakePort.postMessage({
+        data: message
+      });
+
+      assert.deepEqual(spyDispatchEvent.lastCall.args[0].detail, message);
+    });
+  });
+
   suite('IACHandler can store ports', function() {
 
     test('IACHandler has two ports', function() {
-      assert.equal(Object.keys(IACHandler._ports).length, 2);
+      assert.equal(Object.keys(IACHandler._ports).length, 3);
     });
 
     test('IACHandler.getPort() return undefined', function() {
@@ -105,6 +133,10 @@ suite('IACHandler > ', function() {
 
     test('IACHandler.getPort(\'mediacomms\') return port', function() {
       assert.isObject(IACHandler.getPort('mediacomms'));
+    });
+
+    test('IACHandler.getPort(\'fxa-mgmt\') return port', function() {
+      assert.isObject(IACHandler.getPort('fxa-mgmt'));
     });
   });
 });
