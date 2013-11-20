@@ -5,7 +5,6 @@ requireApp('system/test/unit/mock_apps_mgmt.js');
 requireApp('system/test/unit/mock_app.js');
 
 suite('FirefoxOS Accounts IAC Client Suite', function() {
-
   var realMozApps;
 
   var port = {
@@ -48,8 +47,8 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
   });
 
   test('Library integrity', function() {
-    assert.isNotNull(FXA_IAC_Client);
-    assert.equal(Object.keys(FXA_IAC_Client).length, 5);
+    assert.isNotNull(FxAccountsIACHelper);
+    assert.equal(Object.keys(FxAccountsIACHelper).length, 6);
   });
 
   test('Connect with default parameters', function(done) {
@@ -73,7 +72,7 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
     //Invoque one of the methods
     // We don't care about callbacks, wont ever been invoqued since
     // the 'then' function doesnt call anything else
-    FXA_IAC_Client.queryAccount('myemail@myserver.com', null, null);
+    FxAccountsIACHelper.getAccounts(null, null);
   });
 
   test('Connect with custom parameters', function(done) {
@@ -89,7 +88,7 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
         });
 
         // Reset to default values
-        FXA_IAC_Client.reset();
+        FxAccountsIACHelper.reset();
 
         done();
         return future;
@@ -97,26 +96,26 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
     });
     navigator.mozApps.setSelf(app);
 
-    FXA_IAC_Client.init({'keyword': 'mykeyword',
+    FxAccountsIACHelper.init({'keyword': 'mykeyword',
       'rules': {
         'manifestURLs':
             ['manifest.webapp']
       }
     });
 
-    //Invoque one of the methods
+    // Invoque one of the methods
     // We don't care about callbacks, wont ever been invoqued since
     // the 'then' function doesnt call anything else
-    FXA_IAC_Client.queryAccount('myemail@myserver.com', null, null);
+    FxAccountsIACHelper.getAccounts(null, null);
 
   });
 
   test('Something wrong happens with mozApps', function(done) {
     // Be sure that something is wrong with mozapps ;)
     navigator.mozApps.setSelf(null);
-    FXA_IAC_Client.queryAccount('myemail@myserver.com',
+    FxAccountsIACHelper.getAccounts(
     function() {
-      // We should never get an success here
+      // We should never get a success here
       assert.ok(false);
       done();
     },
@@ -128,41 +127,10 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
     });
   });
 
-  suite('QueryAccount suite', function() {
-    test('Check that we send the correct message', function(done) {
-      var email = 'myemail@myserver.com';
-      FXA_IAC_Client.queryAccount(email,
-        function() {
-          assert.ok(postMessageStub.called);
-          var arg = postMessageStub.args[0][0];
-          // We do have an id for this message
-          assert.isNotNull(arg.id);
-          assert.isNotNull(arg);
-          // Remove the id, as it's automatically generated
-          delete arg.id;
-
-          assert.deepEqual(arg, {
-            'name': 'queryAccount',
-            'data': {
-              'email': email
-              }
-          });
-          done();
-        },
-        function() {
-          assert.ok(false);
-          done();
-        }
-      );
-    });
-  });
-
-  suite('Sign* suite', function() {
-    ['signUp', 'signIn'].forEach(function(method) {
+  suite('getAccounts, openFlow, logout suite', function() {
+    ['getAccounts', 'openFlow', 'logout'].forEach(function(method) {
       test('Check that we send the ' + method + ' message', function(done) {
-        var email = 'second@myserver.com';
-        var password = 'secret';
-        FXA_IAC_Client[method](email, password,
+        FxAccountsIACHelper[method](
           function() {
             assert.ok(postMessageStub.called);
             var arg = postMessageStub.args[0][0];
@@ -173,11 +141,7 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
             delete arg.id;
 
             assert.deepEqual(arg, {
-              'name': method,
-              'data': {
-                'email': email,
-                'password': password
-              }
+              'name': method
             });
             done();
           },
@@ -190,4 +154,32 @@ suite('FirefoxOS Accounts IAC Client Suite', function() {
       });
     });
   });
+
+  suite('changePassword suite', function() {
+    test('Check that we send the correct message', function(done) {
+      var email = 'test@domain.com';
+      FxAccountsIACHelper.changePassword(email,
+        function() {
+          assert.ok(postMessageStub.called);
+          var arg = postMessageStub.args[0][0];
+          // We do have an id for this message
+          assert.isNotNull(arg.id);
+          assert.isNotNull(arg);
+          // Remove the id, as it's automatically generated
+          delete arg.id;
+
+          assert.deepEqual(arg, {
+            'name': 'changePassword',
+            'accountId': email
+          });
+          done();
+        },
+        function() {
+          assert.ok(false);
+          done();
+        }
+      );
+    });
+  });
+
 });

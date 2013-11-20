@@ -94,8 +94,7 @@ var FxAccountsIACHelper = function FxAccountsIACHelper() {
     }, successCb, errorCb);
   };
 
-  // Get a reference to the application object
-  // to be able to invoke IAC
+  // Get a reference to the application object to be able to invoke IAC.
   var getSelf = function getSelf(cb, error) {
     var request = navigator.mozApps.getSelf();
     request.onsuccess = function onSuccess(evt) {
