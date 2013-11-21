@@ -14,7 +14,7 @@
  *
  * FxAccountsManager is mostly a proxy between certified apps that wants to
  * manage Firefox Accounts (FTU and Settings so far) and the platform.
- * It handles the communicaton via IAC and redirects the requests coming from
+ * It handles the communication via IAC and redirects the requests coming from
  * these apps to the platform in the form of mozContentEvents. It also handles
  * sign-in requests done via the mozId API from RPs and triggers FxAccountsUI
  * to show the appropriate UI in each case.
@@ -55,6 +55,11 @@ var FxAccountsManager = {
   },
 
   onPortMessage: function fxa_mgmt_onPortMessage(event) {
+    if (!event || !event.detail || !event.detail.data) {
+      console.error('Wrong event');
+      return;
+    }
+
     var _successCb = function _successCb(data) {
       var port = IACHandler.getPort('fxa-mgmt');
       port.postMessage({ data: data });
@@ -93,6 +98,11 @@ var FxAccountsManager = {
   },
 
   handleEvent: function fxa_mgmt_handleEvent(event) {
+    if (!event || !event.detail) {
+      console.error('Wrong event');
+      return;
+    }
+
     var message = event.detail;
 
     if (!message.id) {
