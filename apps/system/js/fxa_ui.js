@@ -34,7 +34,13 @@ var FxUI = {
   },
   // Method which close the Dialog
   close: function fxa_ui_end() {
-    this.dialog.hide();
+    var self = this;
+    this.panel.addEventListener('animationend', function closeAnimationEnd() {
+      self.panel.removeEventListener('animationend', closeAnimationEnd, false);
+      self.panel.classList.remove('closing');
+      self.dialog.hide();
+    }, false);
+    this.panel.classList.add('closing');
   },
   // Method for reseting the panel
   reset: function fxa_ui_reset() {

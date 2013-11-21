@@ -5,11 +5,20 @@
   border: 0;
 }
 
-.fxa-dialog {
-  animation: show-fx-acct 0.5s;
+#fxa-dialog.fxa-dialog {
+  animation: show-fx-acct .5s;
+}
+
+#fxa-dialog.fxa-dialog.closing {
+  animation: hide-fx-acct .5s;
 }
 
 @keyframes show-fx-acct {
   0% { transform: translateY(100%); }
   100% { transform: translateY(0); }
+}
+
+@keyframes hide-fx-acct {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
 }
