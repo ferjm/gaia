@@ -51,7 +51,7 @@ var FxAccountsManager = {
     // Set up the listener for IAC API connection requests.
     window.addEventListener('iac-fxa-mgmt', this.onPortMessage);
     // Listen for chrome events coming from the implementation of RP DOM API.
-    window.addEventListener('mozChromeEvent', this.onChromeEvent);
+    window.addEventListener('mozFxAccountsRPChromeEvent', this);
   },
 
   onPortMessage: function fxa_mgmt_onPortMessage(event) {
@@ -77,23 +77,43 @@ var FxAccountsManager = {
         FxUI.login(_successCb, _errorCb);
         break;
       case 'logout':
-
-        break;
-      case 'delete':
-
+        LazyLoader.load('js/fxa_client.js', function() {
+          FxAccountsClient.logout(_successCb, _errorCb);
+        });
         break;
       case 'changePassword':
-
         break;
     }
   },
 
-  onChromeEvent: function fxa_mgmt_onChromeEvent(event) {
+  _sendContentEvent: function fxa_mgmt_sendContentEvent(aMsg) {
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('mozFxAccountsRPContentEvent', true, true, aMsg);
+    window.dispatchEvent(event);
+  },
+
+  handleEvent: function fxa_mgmt_handleEvent(event) {
     var message = event.detail;
 
-    if (message.type != 'fxa-service') {
-      // TODO: handle chrome event when a non-certified RP wants to sign in.
-      // We need to trigger the FxAUI flow.
+    if (!message.id) {
+      console.warn('Got chrome event without id!');
+      return;
+    }
+
+    switch (message.method) {
+      case 'openFlow':
+        FxUI.login(function(result) {
+          FxAccountsManager._sendContentEvent({
+            id: message.id,
+            result: result
+          });
+        }, function(error) {
+          FxAccountsManager._sendContentEvent({
+            id: message.id,
+            error: error
+          });
+        });
+        break;
     }
   }
 };
