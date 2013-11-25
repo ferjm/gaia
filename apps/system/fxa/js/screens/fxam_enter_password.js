@@ -123,7 +123,7 @@ FxaModuleEnterPassword = (function() {
   Module.onNext = function onNext(gotoNextStepCallback) {
     FxaModuleOverlay.show(_('fxa-authenticating'));
 
-    FxModuleServerRequest.checkPassword(
+    FxModuleServerRequest.signIn(
       this.email,
       this.fxaPwInput.value,
       function onServerResponse(response) {

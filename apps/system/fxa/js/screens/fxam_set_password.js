@@ -17,8 +17,8 @@ FxaModuleSetPassword = (function() {
   }
 
   function _requestCreateAccount(email, password, done) {
-    FxModuleServerRequest.createAccount(email, password,
-      function(response) {
+    FxModuleServerRequest.signUp(email, password,
+      function onSuccess(response) {
         done(response.accountCreated);
       },
       done.bind(null, false));
