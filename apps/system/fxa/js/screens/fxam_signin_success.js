@@ -4,19 +4,15 @@
 FxaModuleSigninSuccess = (function() {
   'use strict';
 
-  function getNextState(done) {
-    return done(FxaModuleStates.DONE);
-  }
-
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
     options = options || {};
     this.importElements('fxa-summary-email');
-    this.fxaSummaryEmail.innerHTML = options.email;
+    this.fxaSummaryEmail.textContent = options.email;
   };
 
-  Module.onNext = function(gotoNextStepCallback) {
-    getNextState(gotoNextStepCallback);
+  Module.onNext = function(done) {
+    done(FxaModuleStates.DONE);
   };
 
   return Module;
