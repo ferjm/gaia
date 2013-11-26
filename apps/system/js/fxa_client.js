@@ -46,10 +46,10 @@ var FxAccountsClient = function FxAccountsClient() {
     }
 
     var callback = callbacks[message.id];
-    if (typeof message.data !== 'undefined' && callback.successCb) {
+    if (callback && typeof message.data !== 'undefined' && callback.successCb) {
       callback.successCb(message.data);
       delete callbacks[message.id];
-    } else if (message.error && callback.errorCb) {
+    } else if (callback && message.error && callback.errorCb) {
       callback.errorCb(message.error);
       delete callbacks[message.id];
     }

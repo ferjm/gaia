@@ -8,8 +8,7 @@ requireApp('system/test/unit/mock_iac_handler.js');
 
 require('/shared/test/unit/mocks/mock_lazy_loader.js');
 
-mocha.globals(['addEventListener',
-               'FxUI',
+mocha.globals(['FxUI',
                'IACHandler',
                'LazyLoader',
                'dispatchEvent']);
@@ -259,6 +258,7 @@ suite('system/FxAccountManager >', function() {
     });
 
     teardown(function() {
+      dispatchEventStub.restore();
       FxUI._reset();
     });
 
