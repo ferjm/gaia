@@ -25,6 +25,14 @@ FxaModule = (function() {
       ids.forEach(function(id) {
         this[Utils.camelCase(id)] = document.getElementById(id);
       }, this);
+    },
+
+    showErrorResponse: function(response) {
+      FxaModuleOverlay.hide();
+      LazyLoader.load('js/fxam_errors.js', function() {
+        var config = FxaModuleErrors.responseToParams(response);
+        FxaModuleErrorOverlay.show(config.title, config.message);
+      });
     }
   };
 

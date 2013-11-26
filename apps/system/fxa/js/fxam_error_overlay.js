@@ -9,8 +9,8 @@ var FxaModuleErrorOverlay = {
     if (! (overlayEl && titleEl && messageEl))
       return;
 
-    titleEl.textContent = title;
-    messageEl.textContent = message;
+    titleEl.textContent = title || '';
+    messageEl.textContent = message || '';
 
     overlayEl.classList.add('show');
 

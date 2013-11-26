@@ -13,7 +13,9 @@
 
         onsuccess && onsuccess(params);
       } else {
-        onerror && onerror();
+        onerror && onerror({
+          error: 'SERVER_ERROR'
+        });
       }
 
     }, 1000);
@@ -31,25 +33,18 @@
                 email, password, successHandler, errorHandler);
 
       function successHandler(response) {
+        var authenticated =
+          (response && response.user && response.user.verified) || false;
         onsuccess({
           // use the response code as specified in
           // https://id.etherpad.mozilla.org/fxa-on-fxos-architecture
-          authenticated: !!response.user
+          authenticated: authenticated
         });
       }
 
       function errorHandler(response) {
-        // TODO - this is only temporary until the IAC client returns the
-        // correct error code. See https://pastebin.mozilla.org/3646856
-        // expected error codes are in
-        // https://id.etherpad.mozilla.org/fxa-on-fxos-architecture
-        if (response.message === 'Incorrect password') {
-          onsuccess({
-            authenticated: false
-          });
-        } else {
-          onerror(response);
-        }
+        // TODO Check error codes
+        onerror && onerror(response);
       }
     },
     signUp: function(email, password, onsuccess, onerror) {

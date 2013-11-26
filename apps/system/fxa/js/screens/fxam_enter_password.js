@@ -8,7 +8,6 @@ FxaModuleEnterPassword = (function() {
 
   var _ = navigator.mozL10n.get;
 
-  // only checks whether the password passes input validation
   function _isPasswordValid(passwordEl) {
     var passwordValue = passwordEl.value;
     return passwordValue && passwordEl.validity.valid;
@@ -22,22 +21,17 @@ FxaModuleEnterPassword = (function() {
     }
   }
 
-  function _showAuthenticationError() {
-    FxaModuleErrorOverlay.show(
-      _('fxa-authenticating-error-title'),
-      _('fxa-authenticating-error-message')
-    );
-  }
-
-  function _showPasswordMismatch() {
-    FxaModuleErrorOverlay.show(
-      _('fxa-invalid-password'),
-      _('fxa-cannot-authenticate')
-    );
+  function _cleanForm(passwordEl, passwordCheck) {
+    passwordEl.value = '';
+    passwordCheck.checked = false;
   }
 
   function _loadSigninSuccess(done) {
     done(FxaModuleStates.SIGNIN_SUCCESS);
+  }
+
+  function _notVerifiedUser(done) {
+    done(FxaModuleStates.SIGNUP_SUCCESS);
   }
 
   function _togglePasswordVisibility() {
@@ -46,23 +40,26 @@ FxaModuleEnterPassword = (function() {
   }
 
   function _requestPasswordReset(email, done) {
-    FxModuleServerRequest.requestPasswordReset(email,
-      function(response) {
+    FxModuleServerRequest.requestPasswordReset(
+      email,
+      function onSuccess(response) {
         done(response.success);
       },
-      done.bind(null, false));
+      this.showErrorResponse);
   }
 
   function _showCouldNotResetPassword() {
-    FxaModuleErrorOverlay.show(_('fxa-cannot-reset-password'));
+    this.showErrorResponse({
+      error: 'RESET_PASSWORD_ERROR'
+    });
   }
 
   function _forgotPassword() {
     FxaModuleOverlay.show(_('fxa-requesting-password-reset'));
-    _requestPasswordReset(this.email, function(isRequestHandled) {
+    _requestPasswordReset.call(this, this.email, function(isRequestHandled) {
       FxaModuleOverlay.hide();
       if (!isRequestHandled) {
-        _showCouldNotResetPassword();
+        _showCouldNotResetPassword.call(this);
         return;
       }
 
@@ -73,13 +70,35 @@ FxaModuleEnterPassword = (function() {
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
 
-    if (!this.fxaUserEmail) {
+    if (!this.initialized) {
+      // Cache DOM elements
       this.importElements(
         'fxa-user-email',
         'fxa-pw-input',
         'fxa-show-pw',
         'fxa-forgot-password'
       );
+      // Add listeners
+      this.fxaPwInput.addEventListener(
+        'input',
+        function onInput(event) {
+          _enableNext(event.target);
+        }
+      );
+
+      this.fxaShowPw.addEventListener(
+        'change',
+        _togglePasswordVisibility.bind(this),
+        false
+      );
+
+      this.fxaForgotPassword.addEventListener(
+        'click',
+        _forgotPassword.bind(this),
+        false
+      );
+      // Avoid repeated initialization
+      this.initialized = true;
     }
 
     if (!options || !options.email) {
@@ -87,37 +106,16 @@ FxaModuleEnterPassword = (function() {
       return;
     }
 
-    this.fxaPwInput.value = '';
     this.fxaUserEmail.textContent = options.email;
     this.email = options.email;
 
+    _cleanForm(
+      this.fxaPwInput,
+      this.fxaShowPw
+    );
+
     _enableNext(this.fxaPwInput);
 
-    if (this.initialized) {
-      return;
-    }
-
-    // Add listeners
-    this.fxaPwInput.addEventListener(
-      'input',
-      function onInput(event) {
-        _enableNext(event.target);
-      }
-    );
-
-    this.fxaShowPw.addEventListener(
-      'change',
-      _togglePasswordVisibility.bind(this),
-      false
-    );
-
-    this.fxaForgotPassword.addEventListener(
-      'click',
-      _forgotPassword.bind(this),
-      false
-    );
-
-    this.initialized = true;
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
@@ -128,16 +126,20 @@ FxaModuleEnterPassword = (function() {
       this.fxaPwInput.value,
       function onServerResponse(response) {
         FxaModuleOverlay.hide();
-        if (response.authenticated) {
-          _loadSigninSuccess(gotoNextStepCallback);
-        } else {
-          _showPasswordMismatch();
+        if (!response.authenticated) {
+          _notVerifiedUser(gotoNextStepCallback);
+          return;
         }
-      },
-      function onNetworkError() {
-        FxaModuleOverlay.hide();
-        _showAuthenticationError();
-      }
+
+        _loadSigninSuccess(gotoNextStepCallback);
+      }.bind(this),
+      function onError(response) {
+        _cleanForm(
+          this.fxaPwInput,
+          this.fxaShowPw
+        );
+        this.showErrorResponse(response);
+      }.bind(this)
     );
   };
 
