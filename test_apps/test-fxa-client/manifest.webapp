@@ -8,5 +8,6 @@
   },
   "icons": {
     "120": "/style/icons/icon.png"
-  }
+  },
+  "orientation": "default"
 }
