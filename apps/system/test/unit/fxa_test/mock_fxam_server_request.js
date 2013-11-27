@@ -21,7 +21,7 @@ var MockFxModuleServerRequest = {
       onerror && onerror();
     }
   },
-  checkPassword: function(email, password, onsuccess, onerror) {
+  signIn: function(email, password, onsuccess, onerror) {
     if (!this.error) {
       setTimeout(function() {
         var params = {
@@ -33,7 +33,7 @@ var MockFxModuleServerRequest = {
       onerror && onerror();
     }
   },
-  createAccount: function(email, password, onsuccess, onerror) {
+  signUp: function(email, password, onsuccess, onerror) {
     if (!this.error) {
       setTimeout(function() {
         var params = {

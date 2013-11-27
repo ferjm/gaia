@@ -6,7 +6,7 @@
 FxaModuleEnterPassword = (function() {
   'use strict';
 
-  var _ = navigator.mozL10n.get;
+  var _;
 
   function _isPasswordValid(passwordEl) {
     var passwordValue = passwordEl.value;
@@ -24,6 +24,7 @@ FxaModuleEnterPassword = (function() {
   function _cleanForm(passwordEl, passwordCheck) {
     passwordEl.value = '';
     passwordCheck.checked = false;
+    passwordEl.setAttribute('type', 'password');
   }
 
   function _loadSigninSuccess(done) {
@@ -45,7 +46,8 @@ FxaModuleEnterPassword = (function() {
       function onSuccess(response) {
         done(response.success);
       },
-      this.showErrorResponse);
+      this.showErrorResponse
+    );
   }
 
   function _showCouldNotResetPassword() {
@@ -56,21 +58,28 @@ FxaModuleEnterPassword = (function() {
 
   function _forgotPassword() {
     FxaModuleOverlay.show(_('fxa-requesting-password-reset'));
-    _requestPasswordReset.call(this, this.email, function(isRequestHandled) {
-      FxaModuleOverlay.hide();
-      if (!isRequestHandled) {
-        _showCouldNotResetPassword.call(this);
-        return;
-      }
+    _requestPasswordReset.call(
+      this,
+      this.email,
+      function(isRequestHandled) {
+        FxaModuleOverlay.hide();
+        if (!isRequestHandled) {
+          _showCouldNotResetPassword.call(this);
+          return;
+        }
 
-      FxaModuleStates.setState(FxaModuleStates.PASSWORD_RESET_SUCCESS);
-    });
+        FxaModuleStates.setState(FxaModuleStates.PASSWORD_RESET_SUCCESS);
+      }
+    );
   }
 
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
 
     if (!this.initialized) {
+      console.log('Se ha inicializado ENTER password');
+      // l10n handling
+      _ = navigator.mozL10n.get;
       // Cache DOM elements
       this.importElements(
         'fxa-user-email',

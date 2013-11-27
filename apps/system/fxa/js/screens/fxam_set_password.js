@@ -5,18 +5,25 @@
 FxaModuleSetPassword = (function() {
   'use strict';
 
-  var _ = navigator.mozL10n.get;
+  var _;
 
-  function isPasswordValid(passwordEl) {
+  function _isPasswordValid(passwordEl) {
     var passwordValue = passwordEl.value;
     return passwordValue && passwordEl.validity.valid;
   }
 
-  function _requestCreateAccount(email, password, done) {
-    FxModuleServerRequest.signUp(email, password,
-      function onSuccess(response) {
-        done(response.accountCreated);
-      }, this.showErrorResponse);
+  function _enableNext(passwordEl) {
+    if (_isPasswordValid(passwordEl)) {
+      FxaModuleUI.enableNextButton();
+    } else {
+      FxaModuleUI.disableNextButton();
+    }
+  }
+
+  function _cleanForm(passwordEl, passwordCheck) {
+    passwordEl.value = '';
+    passwordCheck.checked = false;
+    passwordEl.setAttribute('type', 'password');
   }
 
   function _showRegistering() {
@@ -33,48 +40,70 @@ FxaModuleSetPassword = (function() {
     });
   }
 
-  function togglePasswordVisibility() {
-    var showPassword = !!this.fxaShowPw.checked;
-    var passwordFieldType = showPassword ? 'text' : 'password';
-
-    this.fxaPwInput.setAttribute('type', passwordFieldType);
+  function _togglePasswordVisibility() {
+    var passwordFieldType = !!this.fxaShowPwSet.checked ? 'text' : 'password';
+    this.fxaPwSetInput.setAttribute('type', passwordFieldType);
   }
 
   var Module = Object.create(FxaModule);
   Module.init = function init(options) {
+
+    if (!this.initialized) {
+      console.log('Se ha inicializado SET password');
+      // l10n manager
+      _ = navigator.mozL10n.get;
+      // Cache DOM elements
+      this.importElements(
+        'fxa-user-set-email',
+        'fxa-pw-set-input',
+        'fxa-show-pw-set'
+      );
+      // Add Listeners
+      this.fxaPwSetInput.addEventListener(
+        'input',
+        function onInput(event) {
+          _enableNext(event.target);
+        }
+      );
+
+      this.fxaShowPwSet.addEventListener(
+        'change',
+        _togglePasswordVisibility.bind(this),
+        false
+      );
+    }
+
     options = options || {};
 
-    this.importElements(
-      'fxa-user-email',
-      'fxa-pw-input',
-      'fxa-show-pw'
+    this.email = options.email;
+    this.fxaUserSetEmail.innerHTML = options.email;
+
+    _cleanForm(
+      this.fxaPwSetInput,
+      this.fxaShowPwSet
     );
 
-    this.email = options.email;
-
-    this.fxaUserEmail.innerHTML = options.email;
-
-    this.fxaShowPw.addEventListener(
-        'change', togglePasswordVisibility.bind(this), false);
+    _enableNext(this.fxaPwSetInput);
   };
 
   Module.onNext = function onNext(gotoNextStepCallback) {
-    var password = this.fxaPwInput.value;
     _showRegistering();
-    _requestCreateAccount.call(
-      this,
+    FxModuleServerRequest.signUp(
       this.email,
-      password,
-      function(isAccountCreated) {
+      this.fxaPwSetInput.value,
+      function(response) {
         _hideRegistering();
 
-        if (! isAccountCreated) {
+        var isAccountCreated = response.accountCreated;
+
+        if (!isAccountCreated) {
           _showUserNotCreated.call(this);
           return;
         }
 
         gotoNextStepCallback(FxaModuleStates.SIGNUP_SUCCESS);
-      }
+      }.bind(this),
+      this.showErrorResponse
     );
   };
 
