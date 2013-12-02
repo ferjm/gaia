@@ -14,10 +14,10 @@ var FxaModuleManager = {
   },
   done: function() {
    // Send params to the System
-   window.parent.FxUI.done(this.paramsRetrieved);
+   window.parent.FxAccountsUI.done(this.paramsRetrieved);
   },
   close: function() {
-    window.parent.FxUI.error();
+    window.parent.FxAccountsUI.error();
   }
 };
 

@@ -1,6 +1,6 @@
 'use strict';
 
-var FxUI = {
+var FxAccountsUI = {
   dialog: null,
   panel: null,
   onerrorCB: null,
@@ -67,5 +67,5 @@ var FxUI = {
   }
 };
 
-FxUI.init();
+FxAccountsUI.init();
 

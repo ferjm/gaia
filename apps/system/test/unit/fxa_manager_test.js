@@ -8,7 +8,7 @@ requireApp('system/test/unit/mock_iac_handler.js');
 
 require('/shared/test/unit/mocks/mock_lazy_loader.js');
 
-mocha.globals(['FxUI',
+mocha.globals(['FxAccountsUI',
                'IACHandler',
                'LazyLoader',
                'dispatchEvent']);
@@ -23,7 +23,7 @@ suite('system/FxAccountManager >', function() {
 
   new MocksHelper([
     'FxAccountsClient',
-    'FxUI',
+    'FxAccountsUI',
     'IACHandler',
     'LazyLoader'
   ]).attachTestHelpers();
@@ -179,7 +179,7 @@ suite('system/FxAccountManager >', function() {
 
   suite('On openFlow port message, successCb', function() {
     setup(function() {
-      FxUI._successMsg = 'success';
+      FxAccountsUI._successMsg = 'success';
       FxAccountsManager.onPortMessage({
         'detail': {
           'data': {
@@ -190,11 +190,11 @@ suite('system/FxAccountManager >', function() {
     });
 
     teardown(function() {
-      FxUI._reset();
+      FxAccountsUI._reset();
     });
 
-    test('FxUI.login called', function() {
-      assert.equal(FxUI._call, 'login');
+    test('FxAccountsUI.login called', function() {
+      assert.equal(FxAccountsUI._call, 'login');
     });
 
     test('Got fxa-mgmt port', function() {
@@ -210,7 +210,7 @@ suite('system/FxAccountManager >', function() {
 
   suite('On openFlow port message, errorCb', function() {
     setup(function() {
-      FxUI._errorMsg = 'error';
+      FxAccountsUI._errorMsg = 'error';
       FxAccountsManager.onPortMessage({
         'detail': {
           'data': {
@@ -221,11 +221,11 @@ suite('system/FxAccountManager >', function() {
     });
 
     teardown(function() {
-      FxUI._reset();
+      FxAccountsUI._reset();
     });
 
-    test('FxUI.login called', function() {
-      assert.equal(FxUI._call, 'login');
+    test('FxAccountsUI.login called', function() {
+      assert.equal(FxAccountsUI._call, 'login');
     });
 
     test('Got fxa-mgmt port', function() {
@@ -248,7 +248,7 @@ suite('system/FxAccountManager >', function() {
       dispatchEventStub.withArgs(sinon.match.has('type',
                                  'mozFxAccountsRPContentEvent'));
 
-      FxUI._successMsg = 'success';
+      FxAccountsUI._successMsg = 'success';
       FxAccountsManager.handleEvent({
         'detail': {
           'id': id,
@@ -259,14 +259,14 @@ suite('system/FxAccountManager >', function() {
 
     teardown(function() {
       dispatchEventStub.restore();
-      FxUI._reset();
+      FxAccountsUI._reset();
     });
 
-    test('FxUI.login called', function() {
-      assert.equal(FxUI._call, 'login');
+    test('FxAccountsUI.login called', function() {
+      assert.equal(FxAccountsUI._call, 'login');
     });
 
-    test('on FxUI reply sendContentEvent', function() {
+    test('on FxAccountsUI reply sendContentEvent', function() {
       assert.isTrue(dispatchEventStub.called);
     });
   });

@@ -79,7 +79,7 @@ var FxAccountsManager = {
         });
         break;
       case 'openFlow':
-        FxUI.login(_successCb, _errorCb);
+        FxAccountsUI.login(_successCb, _errorCb);
         break;
       case 'logout':
         LazyLoader.load('js/fxa_client.js', function() {
@@ -112,7 +112,7 @@ var FxAccountsManager = {
 
     switch (message.method) {
       case 'openFlow':
-        FxUI.login(function(result) {
+        FxAccountsUI.login(function(result) {
           FxAccountsManager._sendContentEvent({
             id: message.id,
             result: result
