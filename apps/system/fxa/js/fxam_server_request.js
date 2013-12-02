@@ -21,6 +21,13 @@
     }, 1000);
   }
 
+  function _setAccountDetails(response) {
+    if (response && response.user.accountId) {
+      FxaModuleManager.setParam('email', response.user.accountId);
+      FxaModuleManager.setParam('verified', response.user.verified);
+    }
+  }
+
   var FxModuleServerRequest = {
     checkEmail: function(email, onsuccess, onerror) {
       window.parent.LazyLoader.load('../js/fxa_client.js', function() {
@@ -33,6 +40,7 @@
                 email, password, successHandler, errorHandler);
 
       function successHandler(response) {
+        _setAccountDetails(response);
         var authenticated =
           (response && response.user && response.user.verified) || false;
         onsuccess({
@@ -49,7 +57,10 @@
     },
     signUp: function(email, password, onsuccess, onerror) {
       window.parent.FxAccountsClient.signUp(
-                email, password, onsuccess, onerror);
+                email, password, function(response) {
+        _setAccountDetails(response);
+        onsuccess(response);
+      }, onerror);
     },
     requestPasswordReset: function(email, onsuccess, onerror) {
       var params = {

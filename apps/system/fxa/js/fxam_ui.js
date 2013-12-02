@@ -14,7 +14,7 @@ var FxaModuleUI = {
     }, this);
 
     this.close.addEventListener('click', function() {
-      FxaModuleManager.close();
+      FxaModuleManager.close('DIALOG_CLOSED_BY_USER');
     });
 
     this.back.addEventListener('mousedown', function() {

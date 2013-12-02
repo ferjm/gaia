@@ -54,15 +54,14 @@ var FxAccountsUI = {
     this.panel.appendChild(this.iframe);
     this.dialog.show();
   },
-  // Method for sending the email to the App
-  // which request FxAccounts
+  // Method for sending the result of the FxAccounts flow to the caller app
   done: function(data) {
     // Proccess data retrieved
     this.onsuccessCB && this.onsuccessCB(data);
     this.close();
   },
-  error: function() {
-    this.onerrorCB && this.onerrorCB();
+  error: function(error) {
+    this.onerrorCB && this.onerrorCB(error);
     this.close();
   }
 };

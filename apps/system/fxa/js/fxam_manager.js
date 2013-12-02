@@ -16,8 +16,8 @@ var FxaModuleManager = {
    // Send params to the System
    window.parent.FxAccountsUI.done(this.paramsRetrieved);
   },
-  close: function() {
-    window.parent.FxAccountsUI.error();
+  close: function(error) {
+    window.parent.FxAccountsUI.error(error);
   }
 };
 
