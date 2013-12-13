@@ -379,12 +379,11 @@ var UIManager = {
   },
 
   createFirefoxAccount: function ui_createFirefoxAccount() {
-    var showResponse = function showResponse(response) {
-      alert('Success: ' + JSON.stringify(response));
+    var showResponse = function ui_showResponse(response) {
       Navigation.forward();
     };
-    var showError = function showResponse(response) {
-      alert('Error: ' + JSON.stringify(response));
+    var showError = function ui_showError(response) {
+      console.error('Create FxA Error: ' + JSON.stringify(response));
     };
     FxAccountsIACHelper.openFlow(showResponse, showError);
   },
