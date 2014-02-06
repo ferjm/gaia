@@ -36,7 +36,8 @@ var steps = {
   7: {
     onlyForward: false,
     hash: '#firefox_accounts',
-    requireSIM: false
+    requireSIM: false,
+    requireSetting: 'identity.fxaccounts.ui.enabled'
   },
   8: {
     onlyForward: false,
@@ -69,13 +70,23 @@ var Navigation = {
     window.addEventListener('hashchange', this);
     UIManager.activationScreen.addEventListener('click',
         this.handleExternalLinksClick.bind(this));
-    this.simMandatory = false;
 
-    var req = settings && settings.createLock().get('ftu.sim.mandatory') || {};
-    var self = this;
-    req.onsuccess = function onSuccess() {
-      self.simMandatory = req.result['ftu.sim.mandatory'] || false;
+    this.settingsCache = {
+      'ftu.sim.mandatory': false,
+      'identity.fxaccounts.ui.enabled': false
     };
+
+    if (!settings) {
+      return;
+    }
+
+    var self = this;
+    Object.keys(this.settingsCache).forEach(function(key) {
+      var req = settings.createLock().get(key);
+      req.onsuccess = function onSuccess() {
+        self.settingsCache[key] = req.result[key] || false;
+      };
+    });
   },
 
   back: function n_back(event) {
@@ -224,7 +235,7 @@ var Navigation = {
     UIManager.progressBar.className = className;
 
     // If SIM card is mandatory, we hide the button skip
-    if (this.simMandatory) {
+    if (this.settingsCache['ftu.sim.mandatory']) {
       UIManager.skipPinButton.classList.add('hidden');
       UIManager.backSimButton.classList.remove('hidden');
     } else {
@@ -267,13 +278,21 @@ var Navigation = {
 
     // Retrieve future location
     var futureLocation = steps[self.currentStep];
+
+    // Check required setting.
+    if (futureLocation.requireSetting &&
+        !this.settingsCache[futureLocation.requireSetting]) {
+      self.skipStep();
+      return;
+    }
+
     // There is some locations which need a 'loading'
     if (futureLocation.hash === '#wifi') {
       utils.overlay.show(_('scanningNetworks'), 'spinner');
     }
 
     // If SIMcard is mandatory and no SIM, go to message window
-    if (self.simMandatory &&
+    if (self.settingsCache['ftu.sim.mandatory'] &&
         !IccHelper.cardState &&
         futureLocation.requireSIM) {
       //Send to SIM Mandatory message

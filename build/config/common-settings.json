@@ -63,6 +63,7 @@
    "icc.toneDefaultTimeout": 5000,
    "icc.goBackTimeout": 1000,
    "icc.selectTimeout": 150000,
+   "identity.fxaccounts.ui.enabled": true,
    "keyboard.vibration": true,
    "keyboard.clicksound": true,
    "keyboard.autocorrect": true,
