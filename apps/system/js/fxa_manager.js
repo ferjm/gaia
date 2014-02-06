@@ -96,12 +96,28 @@ var FxAccountsManager = {
           });
         })(methodName);
         break;
+      case 'refreshAuthentication':
+        (function(methodName) {
+          var accountId = event.detail.accountId;
+          if (!accountId) {
+            self.sendPortMessage({ methodName: methodName,
+                                   error: 'NO_VALID_ACCOUNTID' });
+            return;
+          }
+
+          FxAccountsUI.refreshAuthentication(accountId, function(data) {
+            self.sendPortMessage({ methodName: methodName, data: data });
+          }, function(error) {
+            self.sendPortMessage({ methodName: methodName, error: error });
+          });
+        })(methodName);
+        break;
     }
   },
 
-  _sendContentEvent: function fxa_mgmt_sendContentEvent(aMsg) {
+  _sendContentEvent: function fxa_mgmt_sendContentEvent(msg) {
     var event = document.createEvent('CustomEvent');
-    event.initCustomEvent('mozFxAccountsRPContentEvent', true, true, aMsg);
+    event.initCustomEvent('mozFxAccountsRPContentEvent', true, true, msg);
     window.dispatchEvent(event);
   },
 
@@ -116,16 +132,34 @@ var FxAccountsManager = {
     switch (message.eventName) {
       case 'openFlow':
         FxAccountsUI.login(function(result) {
-          FxAccountsManager._sendContentEvent({
+          this._sendContentEvent({
             id: message.id,
             result: result
           });
-        }, function(error) {
-          FxAccountsManager._sendContentEvent({
+        }.bind(this), function(error) {
+          this._sendContentEvent({
             id: message.id,
             error: error
           });
-        });
+        }.bind(this));
+        break;
+      case 'refreshAuthentication':
+        var accountId = message.data.accountId;
+        if (!accountId) {
+          console.error('No account id specified');
+          return;
+        }
+        FxAccountsUI.refreshAuthentication(accountId, function(result) {
+          this._sendContentEvent({
+            id: message.id,
+            result: result
+          });
+        }.bind(this), function(error) {
+          this._sendContentEvent({
+            id: message.id,
+            error: error
+          });
+        }.bind(this));
         break;
       case 'onlogin':
       case 'onverifiedlogin':
