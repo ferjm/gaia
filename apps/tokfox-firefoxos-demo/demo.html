@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+    <meta charset="utf-8">
+    <title>TokFox Firefox OS demo</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" type="text/css" href="style/headers.css">
+
+    <!-- Specific styles -->
+    <link rel="stylesheet" type="text/css" href="style/tokfox_fxos_demo.css">
+
+    <!-- Specific code -->
+    <script defer src="js/ext/ffospushhelper.min.js"></script>
+    <script defer src="js/ext/TB2.2.js"></script>
+    <script defer src="js/ext/tokfox-client-0.0.1.js"></script>
+    <script defer src="js/call_log.js"></script>
+    <script defer src="js/call_handler.js"></script>
+    <script defer src="js/notifications.js"></script>
+    <script defer src="js/tokfox_fxos_demo.js"></script>
+  </head>
+
+  <body role="application">
+    <section role="region">
+      <header>
+	      <h1 id="title" data-l10n-id="title">TokFox Firefox OS demo</h1>
+      </header>
+      <section id="buttons_container">
+        <button data-action="register">
+          Register
+        </button>
+        <button data-action="join-session">
+          Join
+        </button>
+        <button data-action="dial" disabled>
+          Dial +34612123123
+        </button>
+        <button data-action="call-test">
+          TEST CALL
+        </button>
+        <button data-action="call-log-test">
+          LOG CALL 1234
+        </button>
+      </section>
+    </section>
+    <div id="emitter-video"></div>
+  </body>
+</html>

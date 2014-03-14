@@ -1,0 +1,317 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  font-size: 10px;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  font-family: 'Fira Sans', sans-serif;
+  background: #25A4E8;
+}
+
+section[role="region"] {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+}
+
+
+a:active, a:selected, a:visited, a:focus{
+    border: none;
+    outline: none;
+}
+
+button::-moz-focus-inner {
+  border: 0;
+}
+
+button:active, button:selected, button:visited, button:focus {
+    outline: none;
+}
+
+
+body[data-layout="register"] #register-panel,
+body[data-layout="call"] #call-panel,
+body[data-layout="incoming"] #call-panel,
+body[data-layout="outgoing"] #call-panel{
+  display: block;
+}
+
+/*
+ * Register panel
+ */
+
+body[data-layout="register"] #register-panel {
+  background: #25A4E8;
+  background-image: url(images/logo.png);
+  background-repeat: no-repeat;  
+  background-position: center 0rem;
+}
+
+body[data-layout="register"].keyboard #register-panel {
+  background: #25A4E8;
+}
+
+#register-panel-form {
+  position: absolute;
+  bottom: 3rem;
+  width: 100%;
+  text-align: center;
+}
+
+#country-code {
+  width: 6rem;
+  font-size: 1.6rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  -moz-box-sizing: border-box;
+  height: 4rem;
+  vertical-align: top;
+  padding: 1rem 1rem 1rem .25rem;
+}
+
+#telephone {
+  width: calc(100% - 9rem);
+  -moz-box-sizing: border-box;
+  padding: 0;
+  border: none;
+  margin: 0;
+  height: 4rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.disabled {
+  opacity: .3;
+  pointer-events: none;
+}
+
+#send-msisdn-button {
+  background: red;
+  margin-top: 1rem;
+  height: 5rem;
+  width: calc(100% - 3rem);
+  border: none;
+  background: white;
+  border-radius: .5rem;
+  color: #25A4E8;
+  font-size: 2.1rem;
+}
+
+#tokfox-explanation {
+  text-align: center !important;
+  padding: .5rem 1.5rem ;
+  font-size: 1.7rem;
+  -moz-box-sizing: border-box;
+  color: white;
+}
+
+
+/*
+ * Call panel
+ */
+
+#call-panel {
+  background: #25A4E8;
+}
+
+#call-panel-info {
+  height: calc(100% - 6rem);
+}
+
+#call-panel-footer {
+  height: 6rem;
+  padding: 1rem;
+  -moz-box-sizing: border-box;
+}
+
+#call-hangup {
+  width: 100%;
+  height: 4rem;
+  background: red;
+  background-image: url(images/ActionIcon_40x40_hangup.png);
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  -moz-box-sizing: border-box;
+  border-radius: .5rem;
+}
+
+#info-container {
+  text-align: center;
+  padding: 3rem 1rem 1.5rem 1rem;
+  -moz-box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#call-panel-info h1 {
+  margin: 0;
+  font-size: 4rem;
+  font-weight: 300;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: white;
+}
+
+#call-panel-info h2 {
+  margin: 0;
+  font-size: 2.3rem;
+  font-weight: 300;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: white;
+}
+
+/*#call-answer {
+  display: none;
+}
+
+body[data-layout="incoming"] #call-answer {
+  display: block;
+  height: 4rem;
+}
+*/
+
+body[data-layout="incoming"] #call-hangup,
+body[data-layout="incoming"] #call-answer{
+  width: 49%;
+  height: 4rem;
+  
+}
+
+#call-answer {
+  display: none;
+}
+
+body[data-layout="incoming"] #call-answer{
+  display: inline-block;
+  background: green;
+  background-image: url(images/ActionIcon_40x40_hangup.png);
+  background-repeat: no-repeat;
+  background-position: center -0.3rem;
+  border: none;
+  -moz-box-sizing: border-box;
+  border-radius: .5rem;
+  transform: rotate(180deg);
+  padding-top: .2rem;
+}
+
+#outgoing-phone-number,
+#outgoing-label {
+  display: none;
+}
+
+body[data-layout="outgoing"] #outgoing-phone-number,
+body[data-layout="outgoing"] #outgoing-label{
+  display: block;
+}
+
+#outgoing-label {
+  width: 100%;
+  overflow: hidden;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  font-weight: 300;
+  color: white;
+}
+
+#outgoing-phone-number {
+  background: transparent;
+  font-size: 4rem;
+  -moz-box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  color: white;
+}
+
+body[data-layout="outgoing"] #call-hangup,
+body[data-layout="outgoing"] #call-panel-info h1,
+body[data-layout="outgoing"] #call-panel-info h2 {
+  display: none;
+}
+
+body[data-layout="outgoing"] #call-answer{
+  width: 100%;
+  height: 4rem;
+  display: inline-block;
+  background: green;
+  background-image: url(images/ActionIcon_40x40_hangup.png);
+  background-repeat: no-repeat;
+  background-position: center -0.3rem;
+  border: none;
+  -moz-box-sizing: border-box;
+  border-radius: .5rem;
+  transform: rotate(180deg);
+  padding-top: .2rem;
+}
+
+.OT_mirrored {
+  display: none !important;
+}
+
+
+/*
+ * loading-overlay
+ */
+#overlay {
+  z-index: 500;
+  background: #F0F0AC;
+  display: none;
+}
+
+#overlay.show {
+  display: block;
+}
+
+section[data-type="dialog"] {
+  z-index: 30;
+  background: white;
+  display: none;
+}
+
+section[data-type="dialog"].show {
+  display: block;
+}
+
+#overlay section {
+  height: 100%;
+  width: 100%;
+  overflow: auto
+}
+
+#loading-overlay {
+  background: black;
+  opacity: .8;
+  color: white;
+}
+
+#loading-overlay p {
+  text-align: center;
+}
+
+#loading-overlay p:first-child {
+  margin-top: 60%;
+  margin-bottom: 1rem;
+}
+
+#loading-overlay p:last-child {
+  font-size: 1.5rem;
+  font-weight: 300;
+}
+
+#loading-overlay progress{
+  width: 4rem;
+  height: 4rem;
+
+}
