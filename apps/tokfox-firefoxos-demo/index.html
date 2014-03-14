@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+    <meta charset="utf-8">
+    <title>TokFox Firefox OS demo</title>
+
+    <!-- Specific styles -->
+    <link rel="stylesheet" type="text/css" href="style/tokfox.css">
+    <link rel="stylesheet" type="text/css" href="style/progress_activity.css">
+
+    <!-- Specific code -->
+    <script defer src="js/ext/ffospushhelper.min.js"></script>
+    <script defer src="js/ext/TB2.2.js"></script>
+    <script defer src="js/ext/tokfox-client-0.0.1.js"></script>
+    <script defer src="js/loading_overlay.js"></script>
+    
+    <script defer src="js/notifications.js"></script>
+    <script defer src="js/ui_manager.js"></script>
+    <script defer src="js/call_handler.js"></script>
+    <script defer src="js/account_manager.js"></script>
+    <script defer src="js/activity_handler.js"></script>
+    <script defer src="js/startup.js"></script>
+  </head>
+
+  <body role="application" data-layout="">
+    <section id="loading-overlay" class="panel" role="region" data-type="dialog">
+      <p><progress></progress></p>
+      <p id="loading-overlay-message">Connecting with the server</p>
+    </section>
+    <section id="register-panel" role="region">
+      <article id="register-panel-form">
+        <p id="tokfox-explanation">
+          Type your phone number to register in TokFox.
+        </p>
+        <select id="country-code">
+          <option>+44</option>
+          <option>+34</option>
+        </select>
+        <input id="telephone" type="tel" placeholder="Phone number">
+        <button id="send-msisdn-button" class="disabled">
+          Send
+        </button>
+      </article>
+    </section>
+    <section id="call-panel" role="region">
+      <section id="call-panel-info">
+        <section id="info-container">
+          <label id="outgoing-label">Type the phone number to call</label>
+          <input type="tel" id="outgoing-phone-number" value="">
+          <h1 id="call-contact-name">
+          </h1>
+          <h2 id="call-contact-phone">
+          </h2>
+        </section>
+      </section>
+      <footer id="call-panel-footer">
+        <button id="call-answer">
+        </button>
+        <button id="call-hangup">
+        </button>
+      </footer>
+    </section>
+  </body>
+</html>

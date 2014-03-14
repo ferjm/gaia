@@ -1,0 +1,53 @@
+{
+  "name": "TokFox",
+  "description": "TokFox demo",
+  "launch_path": "/",
+  "orientation": "portrait",
+  "type": "privileged",
+  "default_locale": "en",
+  "icons": {
+    "60": "/icon.png"
+  },
+  "permissions": {
+    "desktop-notification": {},
+    "push": {},
+    "systemXHR": {},
+    "video-capture": {},
+    "audio-capture": {}
+  },
+  "messages": [
+    { "push": "/index.html"},
+    { "push-register": "/index.html"},
+    { "notification": "/index.html" }
+  ],
+  "entry_points": {
+    "demo": {
+      "launch_path": "/demo.html",
+      "name": "DemoTokFox",
+      "icons": {
+        "60": "/icon.png"
+      },
+      "locales": {
+        "en-US": {
+          "name": "DemoTokFox",
+          "description": "DemoTokFox"
+        }
+      }
+    },
+    "tokfox": {
+      "launch_path": "/index.html",
+      "name": "TokFox",
+      "role": "system"
+    }
+  },
+  "activities": {
+    "dial": {
+      "filters": {
+        "type": "webtelephony/number",
+        "number": { "pattern":"[\\d\\s+#*().-]{0,50}" }
+      },
+      "href": "/index.html",
+      "disposition": "inline"
+    }
+  }
+}
