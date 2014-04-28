@@ -13,6 +13,7 @@
 /* global SCALE_RATIO */
 /* global TelephonyHelper */
 /* global utils */
+/* global CommsProviderHelper */
 
 var contacts = window.contacts || {};
 
@@ -36,6 +37,7 @@ contacts.Details = (function() {
       socialTemplate,
       duplicateTemplate,
       notesTemplate,
+      commsProviderButtonTemplate,
       isFbContact,
       isFbLinked,
       editContactButton,
@@ -71,6 +73,8 @@ contacts.Details = (function() {
     detailsInner = dom.querySelector('#contact-detail-inner');
     favoriteMessage = dom.querySelector('#toggle-favorite');
     notesTemplate = dom.querySelector('#note-details-template-\\#i\\#');
+    commsProviderButtonTemplate =
+      dom.querySelector('#comms-provider-button-template-\\#i\\#');
 
     initPullEffect(cover);
 
@@ -245,6 +249,7 @@ contacts.Details = (function() {
     }
 
     renderPhoto(contact);
+    renderCommsProviders(contact);
   };
 
   var renderFavorite = function cd_renderFavorite(contact) {
@@ -717,6 +722,74 @@ contacts.Details = (function() {
     for (var i = 0; i < elements.length; i++) {
       elements[i].classList.add('remark');
     }
+  };
+
+  var renderCommsProviders = function(contact) {
+    function _getProviderRequiredData(filters) {
+      var data = {};
+      console.log('filters.length ' + filters.length);
+      console.log('contact ' + JSON.stringify(contact));
+      for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
+        console.log('filter.type ' + filter.type);
+        var value = contact[filter.type];
+        console.log('value ' + value);
+        if (value) {
+          data[filter.type] = value;
+        } else if (filter.required) {
+          return null;
+        }
+      }
+      return data;
+    }
+
+    function _makeProviderActivity(name, data) {
+      return function() {
+        new MozActivity({
+          name: name,
+          data: data
+        });
+      };
+    }
+
+    function _renderCommsProviders(providers) {
+      if (!providers || !providers.length) {
+        return;
+      }
+      providers.forEach(function(contactsProvider) {
+        var provider = contactsProvider.contacts;
+        if (!provider) {
+          return;
+        }
+
+        var container = document.createElement('li');
+        var title = document.createElement('h2');
+        title.textContent = provider.name;
+        container.appendChild(title);
+        for (var i = 0; i < provider.activities.length; i++) {
+          var activity = provider.activities[i];
+          var buttonData = {
+            name: activity.info,
+            i: i
+          };
+          var template = utils.templates.render(commsProviderButtonTemplate,
+                                                buttonData);
+          var data = _getProviderRequiredData(activity.filters);
+          template.addEventListener('click',
+                                    _makeProviderActivity(activity.name, data));
+          container.appendChild(template);
+        }
+        listContainer.appendChild(container);
+      });
+    }
+
+    LazyLoader.load(['/shared/js/comms_provider_helper.js'], function() {
+      if (CommsProviderHelper.providers === null) {
+        CommsProviderHelper.buildProviders(_renderCommsProviders);
+        return;
+      }
+      _renderCommsProviders(CommsProviderHelper.providers);
+    });
   };
 
   return {
