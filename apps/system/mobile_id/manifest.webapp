@@ -1,0 +1,11 @@
+{
+  "name": "Example UI",
+  "launch_path": "/index.html",
+  "activities": {
+    "cat": {
+      "href": "/index.html",
+      "disposition": "inline",
+      "returnValue": true
+    }
+  }
+}

@@ -1,0 +1,137 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link href="style/bb/headers.css" rel="stylesheet" type="text/css">
+  <link href="style/bb/progress_activity.css" rel="stylesheet" type="text/css">
+  <link href="style/bb/value_selector.css" rel="stylesheet" type="text/css">
+  <link href="style/bb/buttons.css" rel="stylesheet" type="text/css">
+  <link href="style/bb/style_unstable/input_areas.css" rel="stylesheet" type="text/css">
+  <link href="style/bb/action_menu.css" rel="stylesheet" type="text/css">
+  
+  <link href="style/mobile_id.css" rel="stylesheet" type="text/css">
+  
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/controller.js"></script>
+  <script defer src="js/mobile_id.js"></script>
+  
+  <title>Mobile ID</title>
+</head>
+  <body role="application">
+    <section class="skin-organic" role="region">
+      <header>
+        <a id="close-button"><span class="icon icon-close">back</span></a>
+        <h1>Mobile ID</h1>
+      </header>
+      <!--
+        We will contain the three main panels of the Mobile ID flow:
+        - Selection of the phone number
+        - Add verification code (if required)
+        - Feedback screen
+      -->
+      <section id="panels-container" class="panels-container">
+        <div class="panel msisdn-selection-panel">
+          <p class="explanation">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vulputate libero in lectus tempor, quis faucibus felis elementum.
+          </p>
+          <section class="msisdn-selection-wrapper">
+            <div>
+              <ul class="phone-options-list">
+                <li>
+                  <label>
+                    <span class="icon icon-simcardlock primary">
+                    </span>
+                    <input data-identification-type="msisdn" type="radio" name="msisdn-option" checked="checked" value="+346123123123">
+                    <span class="radio-mask"></span>
+                    <p>+34612123123</p>
+                  </label>
+                </li>
+                <li>
+                  <label>
+                    <span class="icon icon-simcardlock sim1">
+                    </span>
+                    <input data-identification-type="serviceid" type="radio" name="msisdn-option" value="service-1">
+                    <span class="radio-mask"></span>
+                    <p>+34612123123</p>
+                  </label>
+                </li>
+                <li>
+                  <label>
+                    <span class="icon icon-simcardlock sim2">
+                    </span>
+                    <input data-identification-type="serviceid" type="radio" name="msisdn-option" value="service-2">
+                    <span class="radio-mask"></span>
+                    <p>+44122123123</p>
+                  </label>
+                </li>
+              </ul>
+              <div id="add-msisdn">
+                O añade otro número de teléfono
+              </div>
+            </div>
+            <div class="manual-msisdn">
+              <ul class="msisdn-form">
+                <li>
+                  <span class="button icon icon-dialog button-select-wrapper">
+                    <select id="country-codes-select">
+                      <option>+34</option>
+                      <option>+34</option>
+                      <option>+34</option>
+                    </select>
+                  </span>
+                  <!-- <button class="icon icon-dialog">+34</button> -->
+                </li>
+                <li><input type="tel" id="msisdn-input"></li>
+              </ul>
+              <div id="do-automatic-msisdn">
+                O selecciona un número de teléfono
+              </div>
+            </div>
+          </section>
+          
+        
+        </div>
+        <div class="panel verification-panel">
+          <p class="explanation">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. <strong id="verification-timer">  </strong>  Nulla vulputate libero in lectus tempor, quis faucibus felis elementum.
+          </p>
+          <input type="number" id="verification-code">
+        </div>
+        <div class="panel done-panel">
+          <p class="explanation">
+            Great! Know your phone number is registered.
+          </p>
+        </div>
+      </section>
+      <div id="msb" class="multistate-button">
+        <button id="allow-button" class="msb-button-step state-allow">
+          <div class="states-wrapper">
+            <div>
+              Allow
+            </div>
+            <div>
+              <progress></progress><span>Connecting</span>
+            </div>
+          </div>
+        </button>
+        <button id="verify-button" class="msb-button-step state-verify">
+          <div class="states-wrapper">
+            <div>
+              <span></span>
+              Resend
+            </div>
+            <div>
+              Verify
+            </div>
+            <div>
+              <progress></progress><span>Verifying</span>
+            </div>
+            <div>
+              <span>Verified</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </section>
+  </body>
+</html>
