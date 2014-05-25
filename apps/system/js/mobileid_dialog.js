@@ -1,17 +1,13 @@
 /* -*- Mode: js; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- /
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-
-
 'use strict';
 
 (function(exports) {
 
   /**
    * @class MobileIdDialog
-   * @param {options} object for attributes `onShow`, `onHide`,
-                      `onAction` callbacks and details about the dialog
-                      such as dialog `type`, `primaryPhone` and `phones`.
+   * @param {options} object for attributes `onShow`, `onHide`.
    * extends SystemDialog
    */
   var MobileIdDialog = function MobileIdDialog() {
@@ -21,7 +17,7 @@
   };
 
   MobileIdDialog.prototype = {
-    
+
     __proto__: window.SystemDialog.prototype,
 
     customID: 'mobileid-dialog',
@@ -47,7 +43,7 @@
       if (typeof onLoaded === 'function') {
         iframe.onload = onLoaded;
       }
-      
+
       return iframe;
     },
 
@@ -62,21 +58,19 @@
       this.show();
       // If something should happen after the transition
       // we add a listener
-      
-        var onTransitionEnd = function onOpenedAnimation() {
-          this.panel.classList.remove('opening');
-          this.panel.removeEventListener('animationend', onTransitionEnd);
-          
-          if (typeof onOpened === 'function') {
-            onOpened();
-          }
-        }.bind(this);
+      var onTransitionEnd = function onOpenedAnimation() {
+        this.panel.classList.remove('opening');
+        this.panel.removeEventListener('animationend', onTransitionEnd);
 
-        this.panel.addEventListener(
-          'animationend',
-          onTransitionEnd
-        );
-      
+        if (typeof onOpened === 'function') {
+          onOpened();
+        }
+      }.bind(this);
+
+      this.panel.addEventListener(
+        'animationend',
+        onTransitionEnd
+      );
       // Add a transtion to show it properly
       this.panel.classList.add('opening');
     },
@@ -85,11 +79,10 @@
       var onTransitionEnd = function onClosedAnimation() {
         this.panel.removeEventListener('animationend', onTransitionEnd);
         this.panel.innerHTML = '';
-        
         this.panel.classList.remove('closing');
         this.panel.classList.remove('opening');
         this.panel = null;
-        
+
         if (typeof onClosed === 'function') {
           onClosed();
         }
@@ -102,13 +95,10 @@
         onTransitionEnd
       );
 
-
-
-
       this.panel.classList.add('closing');
     }
   };
-  
+
   exports.MobileIdDialog = MobileIdDialog;
 
 }(window));

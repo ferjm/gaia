@@ -17,6 +17,8 @@
   var isManualMSISDN = false;
   var buttonCurrentStatus;
 
+  var countryCodes;
+
   function _setMultibuttonStep(stepName) {
     buttonCurrentStatus = stepName;
     var shift = 0;
@@ -122,7 +124,7 @@
       if (xhr.readyState === 4) {
         if (xhr.status === 0 || xhr.status === 200) {
           // Cache the CC
-          var countryCodes = xhr.response;
+          countryCodes = xhr.response;
           // Clean the <select> element
           countryCodesSelect.innerHTML = '';
           // Per country, we show it CC
@@ -130,6 +132,7 @@
           Object.keys(countryCodes).forEach(function(country) {
             var option = document.createElement('option');
             option.textContent = countryCodes[country].prefix;
+            option.value = country;
             ccFragment.appendChild(option);
           });
 
@@ -139,26 +142,27 @@
         }
       }
     };
-    xhr.open('GET', ' resources/cc.json', true);
+    xhr.open('GET', ' resources/mcc.json', true);
     xhr.responseType = 'json';
     xhr.send();
   }
 
   function _getIdentitySelected() {
     var identity;
-    // Lo recupero
     if (isManualMSISDN) {
       identity =  {
-        cc: countryCodesSelect.value,
-        phonenumber: msisdnInput.value
+        prefix: countryCodes[countryCodesSelect.value].prefix,
+        mcc: countryCodesSelect.value,
+        phoneNumber: msisdnInput.value
       };
     } else {
       var query = 'input[name="msisdn-option"]:checked';
       var optionChecked = document.querySelector(query);
       if (optionChecked.dataset.identificationType === 'msisdn') {
         identity =  {
-          cc: null,
-          phonenumber: optionChecked.value
+          prefix: null,
+          mcc: null,
+          phoneNumber: optionChecked.value
         };
       } else {
         identity = {
@@ -249,17 +253,18 @@
     },
     render: function ui_render(identifications) {
       console.log('Render with ' + JSON.stringify(identifications));
-      
-
 
       var optionsFragment = document.createDocumentFragment();
+
+      if (!identifications.length) {
+        _msisdnContainerTranslate(1);
+        selectAutomaticOptionsButton.hidden = true;
+      }
 
       for (var i = 0, l = identifications.length; i < l; i++) {
         // identifications[i]
         var li = document.createElement('li');
-
         var label = document.createElement('label');
-
         var typeIcon = document.createElement('span');
         var radio = document.createElement('input');
         var radioMask = document.createElement('span');
@@ -294,7 +299,7 @@
         li.appendChild(label);
 
         optionsFragment.appendChild(li);
-       
+
       }
       var phoneOptionsList = document.querySelector('.phone-options-list');
       phoneOptionsList.innerHTML = '';
@@ -313,19 +318,22 @@
       // Show the panel with some feedback to the user
       _setPanelsStep('done');
     },
-    onVerificationCode: function ui_onVerificationCode() {
+    onVerificationCode: function ui_onVerificationCode(retries) {
       // Update the status of the button
       _setMultibuttonStep('verify');
-      // Show the right panel
+      // Show the verification code panel
       _setPanelsStep('verification');
+      _enablePanel('verification');
     },
-    onerror: function ui_onError() {
+    onerror: function ui_onError(error) {
+      console.error('onerror ' + error);
       // Enable all the fields
       _enablePanel('msisdn');
       _enablePanel('verification');
       // Enable the right button
       if (buttonCurrentStatus === 'sending') {
         _setMultibuttonStep('allow');
+        _fieldErrorDance(msisdnInput);
       } else {
         _setMultibuttonStep('verify');
         // Show animation to the field which is wrong

@@ -29,15 +29,21 @@ var MobileIdManager = {
 
     var message = event.detail;
     var params = message.data;
-    
+
     if (message.id) {
       this.chromeEventId = message.id;
     }
 
     switch (message.eventName) {
-      // TODO Unify or change to 'onValidationRequest'
-      case 'onSimChange':
-      case 'permissionPrompt':
+      case 'onpermissionrequest':
+        // If the user introduced a wrong phone number we will be receiving
+        // an "onerror" notifying about the incorrect input followed by a new
+        // "onpermissionrequest" restarting the mobileid flow. If that's the
+        // case as we would already have an opened dialog, we just bail out
+        // discarding the event.
+        if (this.dialog) {
+          return;
+        }
         this.openDialog(params);
         break;
       default:
@@ -61,7 +67,7 @@ var MobileIdManager = {
       });
     }
   },
-  
+
   close: function mobileid_close(isVerificationDone) {
     if (!this.dialog) {
       return;
@@ -115,7 +121,7 @@ var MobileIdManager = {
     // Create & Append the iframe
     this.panel = this.dialog.getView();
     this.iframe = this.dialog.createIframe(function onLoaded() {
-      // TODO REMOVE THIS MOCK
+      /* TODO REMOVE THIS MOCK
       params = [
         {
           primary: true, // ES LA SELECTED BY DEFAULT
@@ -127,7 +133,7 @@ var MobileIdManager = {
           operator: 'Movistar',
           serviceId: '0'
         }
-      ];
+      ];*/
       // Once the iframe is loaded, we send the params to render
       MobileIdManager.sendEventToDialog('init', params);
       // We open with a transition

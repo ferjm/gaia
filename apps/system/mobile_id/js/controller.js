@@ -6,7 +6,6 @@
   'use strict';
   var Controller = {
     init: function c_init() {
-      console.log('INIT');
       window.addEventListener(
         'init',
         this
@@ -28,7 +27,7 @@
         this
       );
       window.addEventListener(
-        'onVerificationCode',
+        'onverificationcode',
         this
       );
     },
@@ -41,17 +40,16 @@
           UI.setScroll(e.detail);
           break;
         case 'onverifying':
-          console.log('asdasd');
           UI.onVerifying();
           break;
         case 'onverified':
           UI.onVerified();
           break;
         case 'onerror':
-          UI.onerror();
+          UI.onerror(e.detail.error);
           break;
-        case 'onVerificationCode':
-          UI.onVerificationCode();
+        case 'onverificationcode':
+          UI.onVerificationCode(e.detail);
           break;
       }
     },
