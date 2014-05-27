@@ -252,8 +252,6 @@
       );
     },
     render: function ui_render(identifications) {
-      console.log('Render with ' + JSON.stringify(identifications));
-
       var optionsFragment = document.createDocumentFragment();
 
       if (!identifications.length) {
