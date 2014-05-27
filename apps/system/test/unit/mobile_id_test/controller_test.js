@@ -37,7 +37,7 @@ suite('MobileID Controller', function() {
     this.sinon.spy(Controller, 'handleEvent');
     var events =
       ['init', 'shown', 'onverifying',
-      'onverified', 'onerror', 'onVerificationCode'];
+      'onverified', 'onerror', 'onverificationcode'];
     // Track number of events
     var i = 0;
     // Are we handling all the events?

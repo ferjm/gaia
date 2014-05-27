@@ -89,7 +89,7 @@ suite('MobileID UI ', function() {
         Controller.postIdentity,
         // As we are in the automatic phone number retrieval, we
         // are using the default one
-        { cc: null, phonenumber: mockDetails[0].msisdn }
+        { mcc: null, phoneNumber: mockDetails[0].msisdn, prefix: null}
       );
     });
 
@@ -154,7 +154,7 @@ suite('MobileID UI ', function() {
     test('> "onVerificationCode" event', function() {
       this.sinon.spy(UI, 'onVerificationCode');
       var eventToLaunch = new CustomEvent(
-        'onVerificationCode',
+        'onverificationcode',
         {
           detail: mockDetails
         }
