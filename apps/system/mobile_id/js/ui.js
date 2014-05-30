@@ -245,6 +245,7 @@
           if (!isVerified) {
             // Was the tap done in the 'resend'?
             if (verificationCodeButton.classList.contains('state-resend')) {
+              Controller.requestCode();
               verificationCodeInput.value = '';
               // Disable the panel
               _enablePanel('verification');
