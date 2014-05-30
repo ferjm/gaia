@@ -10,12 +10,16 @@
       msisdnAutomaticOptions, typeMSISDNButton,
       selectAutomaticOptionsButton, msisdnContainer,
       countryCodesSelect, verificationPanel,
-      msisdnSelectionPanel;
+      msisdnSelectionPanel, verificationCodeTimer;
 
-  // var isVerificationCode = false;
   var isVerified = false;
+  var isVerifying = false;
+  var isTimeoutOver = false;
   var isManualMSISDN = false;
   var buttonCurrentStatus;
+
+  var verificationInterval, verificationIntervalSteps = 0,
+      currentIntervalStep = 0;
 
   var countryCodes;
 
@@ -49,7 +53,7 @@
         verificationCodeButton.disabled = false;
         break;
       case 'resend':
-        shift = 0;
+        shift = -50;
         verificationCodeButton.className = 'msb-button-step state-resend';
         verificationCodeButton.disabled = false;
         break;
@@ -161,7 +165,7 @@
       if (optionChecked.dataset.identificationType === 'msisdn') {
         identity =  {
           prefix: null,
-          mcc: null,
+          mcc: optionChecked.dataset.mcc,
           phoneNumber: optionChecked.value
         };
       } else {
@@ -194,6 +198,8 @@
       countryCodesSelect = document.getElementById('country-codes-select');
       verificationPanel = document.querySelector('.verification-panel');
       msisdnSelectionPanel = document.querySelector('.msisdn-selection-panel');
+      verificationCodeTimer =
+        document.getElementById('verification-code-timer');
 
       // Fill the country code list
       _fillCountryCodesList();
@@ -235,14 +241,29 @@
       verificationCodeButton.addEventListener(
         'click',
         function onVerify(e) {
+          // In the case is not verified yet
           if (!isVerified) {
-            // If we are in the proccess of verifying, we need
-            // first to send the code to the server
-            Controller.postVerificationCode(_getCode());
-            // Disable the panel
-            _disablePanel('verification');
-            // We udpate the button
-            _setMultibuttonStep('verifying');
+            // Was the tap done in the 'resend'?
+            if (verificationCodeButton.classList.contains('state-resend')) {
+              verificationCodeInput.value = '';
+              // Disable the panel
+              _enablePanel('verification');
+              // We udpate the button
+              _setMultibuttonStep('verify');
+              // As we are resending, we reset the conditions
+              isVerifying = false;
+              isTimeoutOver = false;
+            } else {
+              // If we are in the proccess of verifying, we need
+              // first to send the code to the server
+              Controller.postVerificationCode(_getCode());
+              // Disable the panel
+              _disablePanel('verification');
+              // We udpate the button
+              _setMultibuttonStep('verifying');
+              // As we are verifying, we udpate the flag
+              isVerifying = true;
+            }
             return;
           }
           // If the identity posted to the server and/or the verification
@@ -283,8 +304,14 @@
           identifications[i].msisdn || identifications[i].operator;
         radio.name = 'msisdn-option';
         radio.type = 'radio';
-        radio.dataset.identificationType =
-          identifications[i].msisdn ? 'msisdn':'serviceid';
+
+        if (identifications[i].msisdn) {
+          radio.dataset.identificationType = 'msisdn';
+          radio.dataset.mcc = identifications[i].mcc;
+        } else {
+          radio.dataset.identificationType = 'serviceid';
+        }
+
         radio.value =
           identifications[i].msisdn || identifications[i].serviceId;
         radioMask.className = 'radio-mask';
@@ -310,32 +337,100 @@
     onVerified: function ui_onverified() {
       // If our identity is registered properly, we are
       // ready to go!
+      isVerifying = false;
       isVerified = true;
+      clearInterval(verificationInterval);
       // Update the status of the button showing the 'success'
       _setMultibuttonStep('verified');
+      // Remove the progress bar
+      verificationCodeTimer.classList.remove('show');
       // Show the panel with some feedback to the user
       _setPanelsStep('done');
     },
-    onVerificationCode: function ui_onVerificationCode(retries) {
+    onVerificationCode: function ui_onVerificationCode(params) {
       // Update the status of the button
       _setMultibuttonStep('verify');
       // Show the verification code panel
       _setPanelsStep('verification');
       _enablePanel('verification');
+
+      // Timer UI
+
+      // Update the params we need
+      isTimeoutOver = false;
+      currentIntervalStep = +params.timeoutLeft;
+      verificationIntervalSteps = +params.verificationTimeout;
+      // Update the UI properly as starting poing
+      verificationCodeTimer.max = verificationIntervalSteps;
+      verificationCodeTimer.value = currentIntervalStep;
+      // Add the timeout ui
+      verificationCodeTimer.classList.add('show');
+      // Boot the interval with the number of steps we need
+      verificationInterval = setInterval(function() {
+        --currentIntervalStep;
+        if (currentIntervalStep < 0) {
+          if (!isVerifying) {
+            // Show 'resend' button
+            _setMultibuttonStep('resend');
+            _disablePanel('verification');
+          }
+          // Hide the keyboard if present
+          document.activeElement.blur();
+          // Set that the timeout is over
+          isTimeoutOver = true;
+          // Hide timer
+          verificationCodeTimer.classList.remove('show');
+          // Clear interval
+          clearInterval(verificationInterval);
+          return;
+        }
+        verificationCodeTimer.value = currentIntervalStep;
+      }, 1000);
+
+      // TODO Add retries when available in the server
+
     },
     onerror: function ui_onError(error) {
-      console.error('onerror ' + error);
-      // Enable all the fields
-      _enablePanel('msisdn');
-      _enablePanel('verification');
-      // Enable the right button
-      if (buttonCurrentStatus === 'sending') {
-        _setMultibuttonStep('allow');
-        _fieldErrorDance(msisdnInput);
-      } else {
-        _setMultibuttonStep('verify');
-        // Show animation to the field which is wrong
-        _fieldErrorDance(verificationCodeInput);
+      switch (error) {
+        case 'VERIFICATION_CODE_TIMEOUT':
+          _disablePanel('verification');
+          _setMultibuttonStep('resend');
+          break;
+        case 'INVALID_PHONE_NUMBER':
+          _enablePanel('msisdn');
+          _setMultibuttonStep('allow');
+          _fieldErrorDance(msisdnInput);
+          break;
+        case 'INVALID_VERIFICATION_CODE':
+          if (isTimeoutOver) {
+            _disablePanel('verification');
+            _setMultibuttonStep('resend');
+            isTimeoutOver = false;
+            isVerifying = false;
+            return;
+          }
+          _enablePanel('verification');
+          _setMultibuttonStep('verify');
+          _fieldErrorDance(verificationCodeInput);
+          break;
+        default:
+          if (buttonCurrentStatus === 'sending') {
+            _setMultibuttonStep('allow');
+          } else {
+            if (isTimeoutOver) {
+              _disablePanel('verification');
+              _setMultibuttonStep('resend');
+              isTimeoutOver = false;
+              isVerifying = false;
+              return;
+            }
+            _setMultibuttonStep('verify');
+            _enablePanel('verification');
+            _enablePanel('msisdn');
+          }
+          // TODO Add l10n to this alert
+          alert('Network issue. Please try again');
+          break;
       }
     },
     setScroll: function ui_setScroll() {

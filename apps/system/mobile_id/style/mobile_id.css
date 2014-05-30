@@ -73,7 +73,7 @@ input::-moz-focus-inner {
   color: white;
 }
 
-progress {
+.msb-button-step progress {
   margin-right: 1rem;
 }
 
@@ -136,8 +136,16 @@ progress {
   - [3] Feedback screen
  */
 
+#verification-code-timer {
+  visibility: hidden;
+}
+
+#verification-code-timer.show {
+  visibility: visible;
+}
+
 .panels-container {
-  height: calc(100% - 11rem);
+  height: calc(100% - 11.3rem);
   width: 400%;
   overflow: hidden;
 

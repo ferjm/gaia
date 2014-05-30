@@ -34,10 +34,10 @@
     handleEvent: function c_handleEvent(e) {
       switch(e.type) {
         case 'init':
-          UI.render(e.detail);
+          UI.render(e.detail.phoneNumberInfo);
           break;
         case 'shown':
-          UI.setScroll(e.detail);
+          UI.setScroll();
           break;
         case 'onverifying':
           UI.onVerifying();
@@ -52,6 +52,9 @@
           UI.onVerificationCode(e.detail);
           break;
       }
+    },
+    requestCode: function c_requestCode() {
+      window.parent.MobileIdManager.requestNewCode();
     },
     postIdentity: function c_postIdentity(params) {
       window.parent.MobileIdManager.sendMsisdn(params);

@@ -94,6 +94,15 @@ var MobileIdManager = {
     });
   },
 
+  requestNewCode: function mobileid_askForNewCode() {
+    this.sendContentEvent(
+      UNSOLICITED_EVENT,
+      {
+        eventName: 'resendcode'
+      }
+    );
+  },
+
   sendContentEvent: function mobileid_sendContentEvent(eventName, msg) {
     var event = new CustomEvent(eventName, {
       detail: msg
@@ -121,19 +130,6 @@ var MobileIdManager = {
     // Create & Append the iframe
     this.panel = this.dialog.getView();
     this.iframe = this.dialog.createIframe(function onLoaded() {
-      /* TODO REMOVE THIS MOCK
-      params = [
-        {
-          primary: true, // ES LA SELECTED BY DEFAULT
-          msisdn: '+34232342342',
-          operator: 'Movistar'
-        },
-        {
-          primary: false,
-          operator: 'Movistar',
-          serviceId: '0'
-        }
-      ];*/
       // Once the iframe is loaded, we send the params to render
       MobileIdManager.sendEventToDialog('init', params);
       // We open with a transition
