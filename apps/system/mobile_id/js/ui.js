@@ -165,12 +165,12 @@
       if (optionChecked.dataset.identificationType === 'msisdn') {
         identity =  {
           prefix: null,
-          mcc: optionChecked.dataset.mcc,
+          mcc: null,
           phoneNumber: optionChecked.value
         };
       } else {
         identity = {
-          serviceId: optionChecked.value
+          serviceId: optionChecked.dataset.serviceId
         };
       }
     }
@@ -306,11 +306,11 @@
         radio.name = 'msisdn-option';
         radio.type = 'radio';
 
-        if (identifications[i].msisdn) {
-          radio.dataset.identificationType = 'msisdn';
-          radio.dataset.mcc = identifications[i].mcc;
-        } else {
+        if (identifications[i].serviceId) {
           radio.dataset.identificationType = 'serviceid';
+          radio.dataset.serviceId = identifications[i].serviceId;
+        } else {
+          radio.dataset.identificationType = 'msisdn';
         }
 
         radio.value =
