@@ -1,13 +1,15 @@
 'use strict';
 
-/* global Controller, UI*/
+/* global Controller, UI, MockL10n */
 
 requireApp('system/mobile_id/js/controller.js');
 requireApp('system/mobile_id/js/ui.js');
 requireApp('system/mobile_id/js/mobile_id.js');
+requireApp('system/test/unit/mock_l10n.js');
 require('/shared/test/unit/load_body_html_helper.js');
 
 suite('MobileID UI ', function() {
+  var realL10n;
   var mockDetails = [
     {
       primary: true,
@@ -22,6 +24,8 @@ suite('MobileID UI ', function() {
   ];
 
   suiteSetup(function() {
+    realL10n = navigator.mozL10n;
+    navigator.mozL10n = MockL10n;
     loadBodyHTML('/mobile_id/index.html');
     // Dispatch event "onload"
     var eventToLaunch = new CustomEvent(
@@ -32,6 +36,8 @@ suite('MobileID UI ', function() {
   });
 
   suiteTeardown(function() {
+    navigator.mozL10n = realL10n;
+    realL10n = null;
     document.body.innerHTML = '';
   });
 
@@ -40,7 +46,9 @@ suite('MobileID UI ', function() {
       var eventToLaunch = new CustomEvent(
         'init',
         {
-          detail: mockDetails
+          detail: {
+            candidates: mockDetails
+          }
         }
       );
       this.sinon.spy(UI, 'render');

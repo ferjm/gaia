@@ -1,15 +1,23 @@
 
-/* global Controller, UI*/
+/* global Controller, UI, MocksHelper, MockL10n*/
 
 'use strict';
 
 requireApp('system/mobile_id/js/controller.js');
-requireApp('system/mobile_id/js/ui.js');
+// requireApp('system/mobile_id/js/ui.js');
 requireApp('system/js/mobileid_manager.js');
+requireApp('system/test/unit/mobile_id_test/mock_ui.js');
+requireApp('system/test/unit/mock_l10n.js');
 
 require('/shared/test/unit/load_body_html_helper.js');
 
 suite('MobileID Controller', function() {
+  var realL10n;
+
+  var mocksHelper = new MocksHelper([
+    'UI'
+  ]).init();
+
   var mockDetails = [
     {
       primary: true,
@@ -24,12 +32,22 @@ suite('MobileID Controller', function() {
   ];
 
   suiteSetup(function() {
+    mocksHelper.suiteSetup();
+
+    realL10n = navigator.mozL10n;
+    navigator.mozL10n = MockL10n;
+
     loadBodyHTML('/mobile_id/index.html');
     Controller.init();
     UI.init();
   });
 
   suiteTeardown(function() {
+    mocksHelper.suiteTeardown();
+
+    navigator.mozL10n = realL10n;
+    realL10n = null;
+
     document.body.innerHTML = '';
   });
 
@@ -46,7 +64,9 @@ suite('MobileID Controller', function() {
       var eventToLaunch = new CustomEvent(
         eventName,
         {
-          detail: mockDetails
+          detail: {
+            candidates: mockDetails
+          }
         }
       );
       window.addEventListener(eventName, function onEvent() {
