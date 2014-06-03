@@ -10,6 +10,9 @@
   <link href="../shared/style/action_menu.css" rel="stylesheet" type="text/css">
   <link href="style/mobile_id.css" rel="stylesheet" type="text/css">
   
+  <link rel="resource" type="application/l10n" href="locales/locales.ini" />
+
+  <script defer src="../shared/js/l10n.js"></script>
   <script defer src="js/ui.js"></script>
   <script defer src="js/controller.js"></script>
   <script defer src="js/mobile_id.js"></script>
@@ -31,15 +34,14 @@
       -->
       <section id="panels-container" class="panels-container">
         <div class="panel msisdn-selection-panel">
-          <p class="explanation">
+          <p id="mobile-id-explanation" class="explanation" data-l10n-id="mobileIDExplanation">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vulputate libero in lectus tempor, quis faucibus felis elementum.
           </p>
           <section class="msisdn-selection-wrapper">
             <div>
               <ul class="phone-options-list">
               </ul>
-              <div id="add-msisdn">
-                O añade otro número de teléfono
+              <div id="add-msisdn" data-l10n-id="addPhoneNumber">
               </div>
             </div>
             <div class="manual-msisdn">
@@ -47,17 +49,12 @@
                 <li>
                   <span class="button icon icon-dialog button-select-wrapper">
                     <select id="country-codes-select">
-                      <option>+34</option>
-                      <option>+34</option>
-                      <option>+34</option>
                     </select>
                   </span>
-                  <!-- <button class="icon icon-dialog">+34</button> -->
                 </li>
                 <li><input type="tel" id="msisdn-input"></li>
               </ul>
-              <div id="do-automatic-msisdn">
-                O selecciona un número de teléfono
+              <div id="do-automatic-msisdn" data-l10n-id="selectPhoneNumber">
               </div>
             </div>
           </section>
@@ -65,13 +62,12 @@
         
         </div>
         <div class="panel verification-panel">
-          <p class="explanation">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. <strong id="verification-timer">  </strong>  Nulla vulputate libero in lectus tempor, quis faucibus felis elementum.
+          <p class="explanation" id="verification-code-explanation">
           </p>
           <input type="number" id="verification-code">
         </div>
         <div class="panel done-panel">
-          <p class="explanation">
+          <p class="explanation" id="success-explanation">
             Great! Know your phone number is registered.
           </p>
         </div>
@@ -79,11 +75,10 @@
       <div id="msb" class="multistate-button">
         <button id="allow-button" class="msb-button-step state-allow">
           <div class="states-wrapper">
-            <div>
-              Allow
+            <div data-l10n-id="share">
             </div>
             <div>
-              <progress></progress><span>Connecting</span>
+              <progress></progress><span data-l10n-id="connecting"></span>
             </div>
           </div>
         </button>
@@ -91,16 +86,15 @@
           <div class="states-wrapper">
             <div>
               <span></span>
-              Resend
+              <span data-l10n-id="resend"></span>
+            </div>
+            <div data-l10n-id="verify">
             </div>
             <div>
-              Verify
+              <progress></progress><span data-l10n-id="verifying"></span>
             </div>
             <div>
-              <progress></progress><span>Verifying</span>
-            </div>
-            <div>
-              <span>Verified</span>
+              <span data-l10n-id="verified"></span>
             </div>
           </div>
         </button>

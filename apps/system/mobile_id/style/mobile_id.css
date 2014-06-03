@@ -87,7 +87,7 @@ input::-moz-focus-inner {
   transition: all .3s ease;
 }
 
-.state-resend .states-wrapper div span{
+.state-resend .states-wrapper div span:first-child{
   width: 3rem;
   height: 3rem;
   display: inline-block;
@@ -263,9 +263,8 @@ ul.phone-options-list li span.sim2 {
 }
 
 ul.phone-options-list li span.primary {
-  /* TODO Update icon*/
-  background-image: url(images/simcards.png);
-  background-position: -3rem -3rem;
+  background-image: url(images/Telf_tick.png);
+  background-position: center;
   background-repeat: no-repeat;
 }
 
@@ -414,7 +413,7 @@ ul.msisdn-form li:last-child{
  */
 
 .done-panel {
-  background-image: url(images/approved.png);
+  background-image: url(images/Tick.png);
   background-repeat: no-repeat;
   background-size: 49%;
   background-position: center 60%;

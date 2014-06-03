@@ -4,6 +4,13 @@
 
 (function(exports) {
   'use strict';
+
+  function _localize(appName) {
+    navigator.mozL10n.ready(function localized() {
+      UI.localize(appName);
+    });
+  }
+
   var Controller = {
     init: function c_init() {
       window.addEventListener(
@@ -34,7 +41,8 @@
     handleEvent: function c_handleEvent(e) {
       switch(e.type) {
         case 'init':
-          UI.render(e.detail.phoneNumberInfo);
+          _localize(e.detail.appName);
+          UI.render(e.detail.candidates);
           break;
         case 'shown':
           UI.setScroll();

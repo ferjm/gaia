@@ -3,7 +3,7 @@
 
 'use strict';
 
-/* global MobileIdDialog */
+/* global MobileIdDialog, applications */
 
 // Event names.
 const CONTENT_EVENT = 'mozMobileIdContentEvent';
@@ -130,8 +130,16 @@ var MobileIdManager = {
     // Create & Append the iframe
     this.panel = this.dialog.getView();
     this.iframe = this.dialog.createIframe(function onLoaded() {
+      // Retrieve the info of the app given the manifestURL
+      var app = applications.getByManifestURL(params.manifestURL) ||
+                {manifest: {name: 'wadus'}};
+      // Set params to send to the iframe
+      var iframeParams = {
+        appName: app.manifest.name,
+        candidates: params.phoneNumberInfo
+      };
       // Once the iframe is loaded, we send the params to render
-      MobileIdManager.sendEventToDialog('init', params);
+      MobileIdManager.sendEventToDialog('init', iframeParams);
       // We open with a transition
       this.dialog.open(function onOpened() {
         // Once the iframe is loaded, we send the params to render

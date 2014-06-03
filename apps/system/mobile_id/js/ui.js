@@ -10,13 +10,17 @@
       msisdnAutomaticOptions, typeMSISDNButton,
       selectAutomaticOptionsButton, msisdnContainer,
       countryCodesSelect, verificationPanel,
-      msisdnSelectionPanel, verificationCodeTimer;
+      msisdnSelectionPanel, verificationCodeTimer,
+      stepsExplanation, verificationExplanation,
+      successExplanation;
 
   var isVerified = false;
   var isVerifying = false;
   var isTimeoutOver = false;
   var isManualMSISDN = false;
   var buttonCurrentStatus;
+  
+  var appName, identity;
 
   var verificationInterval, verificationIntervalSteps = 0,
       currentIntervalStep = 0;
@@ -200,7 +204,14 @@
       msisdnSelectionPanel = document.querySelector('.msisdn-selection-panel');
       verificationCodeTimer =
         document.getElementById('verification-code-timer');
-
+      // Elements to localize
+      stepsExplanation =
+        document.getElementById('mobile-id-explanation');
+      verificationExplanation =
+        document.getElementById('verification-code-explanation');
+      successExplanation =
+        document.getElementById('success-explanation');
+      
       // Fill the country code list
       _fillCountryCodesList();
 
@@ -233,8 +244,10 @@
           _disablePanel('msisdn');
           // Update the status of the button
           _setMultibuttonStep('sending');
+
           // Send to controller the identity selected
-          Controller.postIdentity(_getIdentitySelected());
+          identity = _getIdentitySelected();
+          Controller.postIdentity(identity);
         }
       );
 
@@ -271,6 +284,18 @@
           // code is accepted, we are ready to close the flow.
           Controller.postCloseAction(isVerified);
         }.bind(this)
+      );
+    },
+    localize: function ui_localize(name) {
+      // Cache the name of the app
+      appName = name;
+      // Let's localize the explanation
+      navigator.mozL10n.localize(
+        stepsExplanation,
+        'mobileIDExplanation',
+        {
+          app_name: appName
+        }
       );
     },
     render: function ui_render(identifications) {
@@ -345,6 +370,15 @@
       _setMultibuttonStep('verified');
       // Remove the progress bar
       verificationCodeTimer.classList.remove('show');
+      // Update the string
+      navigator.mozL10n.localize(
+        successExplanation,
+        'successMessage',
+        {
+          phone_number: identity.phoneNumber,
+          app_name: appName
+        }
+      );
       // Show the panel with some feedback to the user
       _setPanelsStep('done');
     },
@@ -355,6 +389,15 @@
       _setPanelsStep('verification');
       _enablePanel('verification');
 
+      // Update the string
+      navigator.mozL10n.localize(
+        verificationExplanation,
+        'verificationCodeExplanation',
+        {
+          phone_number: identity.phoneNumber
+        }
+      );
+     
       // Timer UI
 
       // Update the params we need
@@ -394,6 +437,9 @@
     onerror: function ui_onError(error) {
       switch (error) {
         case 'VERIFICATION_CODE_TIMEOUT':
+          alert(
+            navigator.mozL10n.get('timeoutErrorMessage')
+          );
           _disablePanel('verification');
           _setMultibuttonStep('resend');
           break;
@@ -429,8 +475,9 @@
             _enablePanel('verification');
             _enablePanel('msisdn');
           }
-          // TODO Add l10n to this alert
-          alert('Network issue. Please try again');
+          alert(
+            navigator.mozL10n.get('serverErrorMessage')
+          );
           break;
       }
     },
