@@ -331,7 +331,7 @@
         radio.name = 'msisdn-option';
         radio.type = 'radio';
 
-        if (identifications[i].serviceId) {
+        if (identifications[i].serviceId !== undefined) {
           radio.dataset.identificationType = 'serviceid';
           radio.dataset.serviceId = identifications[i].serviceId;
         } else {
