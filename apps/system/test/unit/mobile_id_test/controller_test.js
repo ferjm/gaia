@@ -1,23 +1,16 @@
 
-/* global Controller, UI, MocksHelper, MockL10n*/
+/* global Controller, MockL10n, UI*/
 
 'use strict';
 
+requireApp('system/mobile_id/js/ui.js');
 requireApp('system/mobile_id/js/controller.js');
-// requireApp('system/mobile_id/js/ui.js');
-requireApp('system/js/mobileid_manager.js');
-requireApp('system/test/unit/mobile_id_test/mock_ui.js');
 requireApp('system/test/unit/mock_l10n.js');
-
 require('/shared/test/unit/load_body_html_helper.js');
 
 suite('MobileID Controller', function() {
   var realL10n;
-
-  var mocksHelper = new MocksHelper([
-    'UI'
-  ]).init();
-
+  
   var mockDetails = [
     {
       primary: true,
@@ -32,59 +25,107 @@ suite('MobileID Controller', function() {
   ];
 
   suiteSetup(function() {
-    mocksHelper.suiteSetup();
-
     realL10n = navigator.mozL10n;
     navigator.mozL10n = MockL10n;
 
     loadBodyHTML('/mobile_id/index.html');
+    
     Controller.init();
-    UI.init();
   });
 
   suiteTeardown(function() {
-    mocksHelper.suiteTeardown();
-
     navigator.mozL10n = realL10n;
     realL10n = null;
 
     document.body.innerHTML = '';
   });
 
-  test(' all events are listened', function() {
-    this.sinon.spy(Controller, 'handleEvent');
-    var events =
-      ['init', 'shown', 'onverifying',
-      'onverified', 'onerror', 'onverificationcode'];
-    // Track number of events
-    var i = 0;
-    // Are we handling all the events?
-    function _launchEvent(cb) {
-      var eventName = events[i];
-      var eventToLaunch = new CustomEvent(
-        eventName,
-        {
-          detail: {
-            candidates: mockDetails
-          }
+  test(' when "init" is launched, we listen mozL10n ready and we render',
+    function() {
+    this.sinon.stub(UI, 'localize');
+    this.sinon.stub(UI, 'render');
+    this.sinon.spy(navigator.mozL10n, 'ready');
+    var eventToLaunch = new CustomEvent(
+      'init',
+      {
+        detail: {
+          appName: 'app name',
+          candidates: mockDetails
         }
-      );
-      window.addEventListener(eventName, function onEvent() {
-        window.removeEventListener(eventName, onEvent);
-        // Check if the number of listeners is the same with the number
-        // of times that we are handling the event
-        assert.equal(Controller.handleEvent.callCount, i + 1);
-        i++;
-        if (i === events.length) {
-          return;
-        } else {
-          _launchEvent();
-        }
-      });
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(navigator.mozL10n.ready.calledOnce);
+    assert.isTrue(UI.render.calledOnce);
+    assert.isTrue(UI.localize.calledOnce);
+  });
 
-      window.dispatchEvent(eventToLaunch);
-    }
+  test(' when "shown" is launched, we set the scroll params', function() {
+    assert.ok(true);
+    this.sinon.stub(UI, 'setScroll');
+    var eventToLaunch = new CustomEvent(
+      'shown',
+      {
+        detail: {}
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(UI.setScroll.calledOnce);
+  });
 
-    _launchEvent();
+  test(' when "onverifying" is launched, UI should be requested properly',
+    function() {
+    assert.ok(true);
+    this.sinon.stub(UI, 'onVerifying');
+    var eventToLaunch = new CustomEvent(
+      'onverifying',
+      {
+        detail: {}
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(UI.onVerifying.calledOnce);
+  });
+
+  test(' when "onverified" is launched, UI should be requested properly',
+    function() {
+    assert.ok(true);
+    this.sinon.stub(UI, 'onVerified');
+    var eventToLaunch = new CustomEvent(
+      'onverified',
+      {
+        detail: {}
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(UI.onVerified.calledOnce);
+  });
+
+  test(' when "onerror" is launched, UI should be requested properly',
+    function() {
+    assert.ok(true);
+    this.sinon.stub(UI, 'onerror');
+    var eventToLaunch = new CustomEvent(
+      'onerror',
+      {
+        detail: {}
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(UI.onerror.calledOnce);
+  });
+
+  test(' when "onverificationcode" is launched, UI is requested properly',
+    function() {
+    assert.ok(true);
+    this.sinon.stub(UI, 'onVerificationCode');
+    var eventToLaunch = new CustomEvent(
+      'onverificationcode',
+      {
+        detail: {}
+      }
+    );
+    window.dispatchEvent(eventToLaunch);
+    assert.isTrue(UI.onVerificationCode.calledOnce);
   });
 });

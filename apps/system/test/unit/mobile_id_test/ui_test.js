@@ -4,7 +4,6 @@
 
 requireApp('system/mobile_id/js/controller.js');
 requireApp('system/mobile_id/js/ui.js');
-requireApp('system/mobile_id/js/mobile_id.js');
 requireApp('system/test/unit/mock_l10n.js');
 require('/shared/test/unit/load_body_html_helper.js');
 
@@ -27,12 +26,7 @@ suite('MobileID UI ', function() {
     realL10n = navigator.mozL10n;
     navigator.mozL10n = MockL10n;
     loadBodyHTML('/mobile_id/index.html');
-    // Dispatch event "onload"
-    var eventToLaunch = new CustomEvent(
-      'load',
-      {}
-    );
-    window.dispatchEvent(eventToLaunch);
+    UI.init();
   });
 
   suiteTeardown(function() {
@@ -42,20 +36,6 @@ suite('MobileID UI ', function() {
   });
 
   suite(' render', function() {
-    test('> is launched after "init" event', function() {
-      var eventToLaunch = new CustomEvent(
-        'init',
-        {
-          detail: {
-            candidates: mockDetails
-          }
-        }
-      );
-      this.sinon.spy(UI, 'render');
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.render.calledOnce);
-    });
-
     test('> is rendered properly', function() {
       // Render with the mock params
       UI.render(mockDetails);
@@ -111,64 +91,6 @@ suite('MobileID UI ', function() {
         Controller.postVerificationCode,
         verificationCodeMock
       );
-    });
-  });
-
-  suite(' every event is calling the right UI function', function() {
-    test('> "shown" event', function() {
-      this.sinon.spy(UI, 'setScroll');
-      var eventToLaunch = new CustomEvent(
-        'shown',
-        {
-          detail: mockDetails
-        }
-      );
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.setScroll.calledOnce);
-    });
-    test('> "onverifying" event', function() {
-      this.sinon.spy(UI, 'onVerifying');
-      var eventToLaunch = new CustomEvent(
-        'onverifying',
-        {
-          detail: mockDetails
-        }
-      );
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.onVerifying.calledOnce);
-    });
-    test('> "onverified" event', function() {
-      this.sinon.spy(UI, 'onVerified');
-      var eventToLaunch = new CustomEvent(
-        'onverified',
-        {
-          detail: mockDetails
-        }
-      );
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.onVerified.calledOnce);
-    });
-    test('> "onerror" event', function() {
-      this.sinon.spy(UI, 'onerror');
-      var eventToLaunch = new CustomEvent(
-        'onerror',
-        {
-          detail: mockDetails
-        }
-      );
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.onerror.calledOnce);
-    });
-    test('> "onVerificationCode" event', function() {
-      this.sinon.spy(UI, 'onVerificationCode');
-      var eventToLaunch = new CustomEvent(
-        'onverificationcode',
-        {
-          detail: mockDetails
-        }
-      );
-      window.dispatchEvent(eventToLaunch);
-      assert.ok(UI.onVerificationCode.calledOnce);
     });
   });
 });
