@@ -2,7 +2,8 @@
 /* global MockApp, App, GaiaGrid, MocksHelper, loadBodyHTML, BookmarkSource,
           MockNavigatormozApps, appManager */
 
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 
 require('/shared/test/unit/mocks/mock_navigator_moz_apps.js');
 require('/shared/test/unit/load_body_html_helper.js');

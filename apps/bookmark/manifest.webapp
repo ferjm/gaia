@@ -43,5 +43,11 @@
       "access": "readwrite",
       "description": "Stores bookmarks"
     }
+  },
+  "datastores-access": {
+    "bookmarks_provider": {
+      "access": "readwrite",
+      "description": "Bookmark providers will keep a local copy of the bookmarks they own so the Bookmark app can remove them once they are removed from the homescreen"
+    }
   }
 }

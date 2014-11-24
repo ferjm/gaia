@@ -4,7 +4,8 @@
           BookmarksDatabase, HomeState, GridItemsFactory, MockasyncStorage,
           verticalPreferences */
 
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 require('/shared/js/collections_database.js');
 require('/shared/test/unit/mocks/mock_navigator_moz_set_message_handler.js');
 require('/shared/js/homescreens/vertical_preferences.js');
@@ -359,7 +360,7 @@ suite('migrator.js >', function() {
 
     port.postMessage = function(msg) {
       assert.equal(msg, 'Done');
-      
+
       assert.isFalse(bdAddStub.called);
       assert.equal(bookmarks.length, 0);
 
@@ -401,7 +402,7 @@ suite('migrator.js >', function() {
 
     port.postMessage = function(msg) {
       assert.equal(msg, 'Done');
-      
+
       assert.isFalse(bdAddStub.called);
       assert.equal(bookmarks.length, 0);
 
@@ -459,7 +460,7 @@ suite('migrator.js >', function() {
       assert.equal(firstPage.length, 1);
       assert.equal(firstPage[0].id, 234);
       assert.equal(firstPage[0].role, GridItemsFactory.TYPE.COLLECTION);
-      
+
       var secondPage = layout.grid[1];
       assert.equal(secondPage.length, 1);
       assert.equal(secondPage[0].id, 129);
@@ -556,7 +557,7 @@ suite('migrator.js >', function() {
 
     port.postMessage = function(msg) {
       assert.equal(msg, 'Done');
-      
+
       assert.isFalse(bdAddStub.called);
       assert.equal(bookmarks.length, 0);
 

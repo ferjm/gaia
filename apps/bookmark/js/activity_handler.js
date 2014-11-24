@@ -10,7 +10,7 @@ var ActivityHandler = {
           window.removeEventListener('status-hidden', hidden);
           activity.postResult(saved ? 'saved' : 'updated');
         });
-        
+
         utils.status.show(
           navigator.mozL10n.get(saved ? 'added-to-home-screen-message' :
                                         'updated-bookmark'));

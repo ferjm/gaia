@@ -2,7 +2,8 @@
 /* global Contextmenu */
 /* global BookmarksDatabase */
 
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 require('/shared/js/l10n.js');
 require('/js/contextmenu.js');
 

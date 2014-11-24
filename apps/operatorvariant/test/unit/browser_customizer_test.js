@@ -6,7 +6,8 @@
 requireApp('operatorvariant/js/customizers/customizer.js');
 requireApp('operatorvariant/js/customizers/browser_customizer.js');
 require('/shared/test/unit/mocks/mock_navigator_datastore.js');
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 
 suite('BrowserCustomizer >', function() {
   var realDatastore = null,

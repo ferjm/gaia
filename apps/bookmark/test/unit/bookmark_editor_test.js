@@ -8,7 +8,8 @@ require('/shared/test/unit/load_body_html_helper.js');
 
 require('/shared/js/homescreens/icon.js');
 requireApp('bookmark/js/bookmark_editor.js');
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 require('/shared/js/url_helper.js');
 
 suite('bookmark_editor.js >', function() {

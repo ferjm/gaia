@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1">
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script type="text/javascript" defer src="shared/js/datastore_helper.js"></script>
+    <script type="text/javascript" defer src="shared/js/bookmarks/bookmarks_provider.js"></script>
+    <script type="text/javascript" defer src="js/app.js"></script>
+  </head>
+  <body role="application">
+    <h1>Bookmark Provider</h1>
+    <div class="main-form">
+      <section id="action-buttons">
+        <ul>
+          <li id="firefox" data-type="unbookmark">
+            <input id="input-firefox" type="text"/>
+          </li>
+          <li id="chrome" data-type="unbookmark">
+            <input id="input-chrome" type="text"/>
+          </li>
+          <li id="safari" data-type="unbookmark">
+            <input id="input-safari" type="text"/>
+          </li>
+          <li id="ie" data-type="unbookmark">
+            <input id="input-ie" type="text"/>
+          </li>
+        </ul>
+      </section>
+      <section id="result">
+      </section>
+    </div>
+  </body>
+</html>

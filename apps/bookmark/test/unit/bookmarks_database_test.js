@@ -5,7 +5,8 @@
           setup */
 
 require('/shared/test/unit/mocks/mock_navigator_datastore.js');
-require('/shared/js/bookmarks_database.js');
+require('/shared/js/datastore_helper.js');
+require('/shared/js/bookmarks/bookmarks_manager.js');
 
 suite('bookmarks_database.js >', function() {
 
@@ -61,7 +62,7 @@ suite('bookmarks_database.js >', function() {
         }
       };
     };
-    
+
     BookmarksDatabase.getRevisionId().then(function(id) {
       // Do noting
     }, function(e) {
@@ -111,7 +112,7 @@ suite('bookmarks_database.js >', function() {
       url: url,
       name: name
     };
-    
+
     BookmarksDatabase.put({
       id: id,
       url: expectedURL,
@@ -143,7 +144,7 @@ suite('bookmarks_database.js >', function() {
       url: url,
       name: name
     };
-    
+
     BookmarksDatabase.remove(id).then(function(bookmark) {
       assert.equal(Object.keys(MockDatastore._records).length, 0);
       done();

@@ -310,7 +310,8 @@
 
   AppChrome.prototype._registerEvents = function ac__registerEvents() {
     if (this.useCombinedChrome()) {
-      LazyLoader.load('shared/js/bookmarks_database.js', function() {
+      LazyLoader.load(['shared/js/datastore_helper.js',
+                       'shared/js/bookmarks_database.js'], function() {
         this.updateAddToHomeButton();
       }.bind(this));
       LazyLoader.load('shared/elements/gaia_overflow_menu/script.js');
