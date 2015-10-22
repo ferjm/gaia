@@ -160,6 +160,7 @@ var SyncEngine = (function() {
     if (typeof options !== 'object') {
       throw new Error('options should be an Object');
     }
+options.URL = 'http://localhost:8000/v1/';
     ['URL', 'assertion', 'kB'].forEach(field => {
       if (typeof options[field] !== 'string') {
         throw new Error(`options.${field} should be a String`);
