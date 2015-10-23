@@ -22,37 +22,6 @@
   margin: 30px -45px -35px 10px;
 }
 
-/* -------- Bookmark , history  Area -------- */
-#list-dialog {
-  position: absolute;
-  top: 50%;
-  width: 100%;
-  height: 100%;
-  z-index : 310;
-  display : none;
-  background: url("../style/images/background_black.png")  repeat-x center top,
-              -moz-linear-gradient(top, rgba(0, 0, 0, 0.9) 0% ,rgba(0, 0, 0, 0.9) 100%);
-  background-size: 100% 100%;
-  background-color: rgba(0,0,0,0.95);
-  -moz-box-sizing: border-box;
-  -moz-transform: translateY(-50%);
-  -moz-transition: opacity  0.1s cubic-bezier(0.25, 0, 0, 1.0);
-}
-
-#history {
-  pointer-events : none;
-}
-
-#history > .container {
-  top: 70px;
-  width : 1320px;
-  margin : 0px auto;
-  display : block;
-  height : 925px;
-  overflow : hidden;
-  position: relative;
-}
-
 /* -------- history  title -------- */
 #title-area {
   position: relative;
