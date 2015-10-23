@@ -57,8 +57,10 @@
     window.performance.mark('navigationLoaded');
 
     // Element references
+    this.header = document.getElementById('page-indicator-header');
     this.indicator = document.getElementById('page-indicator');
     this.panels = document.getElementById('panels');
+    this.panel = document.getElementById('apps-panel');
     this.meta = document.head.querySelector('meta[name="theme-color"]');
     this.shadow = document.querySelector('#apps-panel > .shadow');
     this.scrollable = document.querySelector('#apps-panel > .scrollable');
@@ -114,10 +116,8 @@
 
     this._iconSize = 0;
 
-    // Update the panel indicator
-    this.updatePanelIndicator();
-
     // Signal handlers
+    this.indicator.addEventListener('keypress', this);
     this.panels.addEventListener('scroll', this);
     this.scrollable.addEventListener('scroll', this);
     this.icons.addEventListener('activate', this);
@@ -336,6 +336,9 @@
     });
 
     this.pages = new Pages();
+
+    // Update the panel indicator
+    this.updatePanelIndicator();
 
     // Application has finished initialisation
     window.performance.mark('navigationInteractive');
@@ -692,10 +695,14 @@
       var appsVisible = this.panels.scrollLeft <= this.panels.scrollLeftMax / 2;
       if (this.appsVisible !== appsVisible) {
         this.appsVisible = appsVisible;
+
+        this.header.setAttribute('data-l10n-id', appsVisible ?
+          'apps-panel' : 'pages-panel');
+        this.indicator.setAttribute('aria-valuenow', appsVisible ? 0 : 1);
         this.indicator.children[0].classList.toggle('active', appsVisible);
         this.indicator.children[1].classList.toggle('active', !appsVisible);
-        this.indicator.setAttribute('data-l10n-id', this.appsVisible ?
-          'apps-panel' : 'pages-panel');
+        this.panel.setAttribute('aria-hidden', !appsVisible);
+        this.pages.panel.setAttribute('aria-hidden', appsVisible);
       }
     },
 
@@ -709,6 +716,24 @@
       var icon, child, id;
 
       switch (e.type) {
+      // Switch between panels
+      case 'keypress':
+        if (!e.ctrlKey) {
+          break;
+        }
+
+        switch (e.keyCode) {
+          case e.DOM_VK_RIGHT:
+            this.panels.scrollTo(
+              { left: this.panels.scrollLeftMax, top: 0, behavior: 'smooth' });
+            break;
+          case e.DOM_VK_LEFT:
+            this.panels.scrollTo(
+              { left: 0, top: 0, behavior: 'smooth' });
+            break;
+        }
+        break;
+
       // Display the top shadow when scrolling down
       case 'scroll':
         if (e.target === this.panels) {
