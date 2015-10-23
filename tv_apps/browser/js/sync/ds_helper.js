@@ -58,6 +58,13 @@ SyncDsHelper.prototype = {
     });
   },
 
+  clear() {
+    localStorage.removeItem(this.dataStoreRevId);
+    return this._ensureStore().then(() => {
+      return this.store.clear();
+    });
+  },
+
   dataStoreSync(handle) {
     return this._ensureStore().then(() => {
       var _revId = this.getSyncedRevId();

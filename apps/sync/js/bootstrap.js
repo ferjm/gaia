@@ -26,6 +26,8 @@ const Bootstrap = (() => {
 
   const loadMainScripts = () => {
     return LazyLoader.load([
+      'shared/js/async_storage.js',
+
       'js/crypto/stringconversion.js',
       'js/crypto/keyderivation.js',
       'js/crypto/fxsyncwebcrypto.js',

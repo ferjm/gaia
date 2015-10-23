@@ -97,16 +97,16 @@ var SyncBookmark = (function () {
     if (!syncDataStore) {
       return Promise.reject('Uninitialized DataStore');
     }
-    return syncDataStore.unregisterStoreChangeEvent();
-  }
-
-  function clear() {
-    return SyncBrowserDB.clearBookmarks();
+    return syncDataStore.unregisterStoreChangeEvent().then(() => {
+      return syncDataStore.clear();
+    }).then(() => {
+      syncDataStore = null;
+      return SyncBrowserDB.clearBookmarks();
+    });
   }
 
   return {
     start: start,
-    stop: stop,
-    clear: clear
+    stop: stop
   };
 })();

@@ -267,6 +267,7 @@ var SyncBrowserDB = {
    * @param {Function} callback Runs on success
    */
   updateRawBookmark: function browserDB_updateBookmark(data, callback) {
+    console.log('updateRawBookmark', JSON.stringify(data));
     this.db.saveBookmark(data, callback);
   },
 

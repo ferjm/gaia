@@ -21,12 +21,11 @@
 
 /* global
   asyncStorage,
-  DataAdapters,
-  LazyLoader
+  DataAdapters
 */
 
-const HISTORY_COLLECTION_MTIME = 'collections::history::mtime';
-const HISTORY_SYNCTOID_PREFIX = 'SynctoId::history::';
+const HISTORY_COLLECTION_MTIME = '::collections::history::mtime';
+const HISTORY_SYNCTOID_PREFIX = '::synctoid::history::';
 
 var HistoryHelper = (() => {
   var placesStore;
@@ -40,28 +39,30 @@ var HistoryHelper = (() => {
     });
   }
 
-  function setSyncedCollectionMtime(mtime) {
+  function setSyncedCollectionMtime(mtime, userid) {
     return new Promise(resolve => {
-      asyncStorage.setItem(HISTORY_COLLECTION_MTIME, mtime, resolve);
+      asyncStorage.setItem(userid + HISTORY_COLLECTION_MTIME, mtime, resolve);
     });
   }
 
-  function getSyncedCollectionMtime() {
+  function getSyncedCollectionMtime(userid) {
     return new Promise(resolve => {
-      asyncStorage.getItem(HISTORY_COLLECTION_MTIME, resolve);
+      asyncStorage.getItem(userid + HISTORY_COLLECTION_MTIME, resolve);
     });
   }
 
-  function setDataStoreId(synctoId, dataStoreId) {
+  function setDataStoreId(synctoId, dataStoreId, userid) {
     return new Promise(resolve => {
-      asyncStorage.setItem(
-        HISTORY_SYNCTOID_PREFIX + synctoId, dataStoreId, resolve);
+      asyncStorage.setItem(userid + HISTORY_SYNCTOID_PREFIX + synctoId,
+                           dataStoreId,
+                           resolve);
     });
   }
 
-  function getDataStoreId(synctoId) {
+  function getDataStoreId(synctoId, userid) {
     return new Promise(resolve => {
-      asyncStorage.getItem(HISTORY_SYNCTOID_PREFIX + synctoId, resolve);
+      asyncStorage.getItem(userid + HISTORY_SYNCTOID_PREFIX + synctoId,
+                           resolve);
     });
   }
 
@@ -107,7 +108,7 @@ var HistoryHelper = (() => {
     return localRecord;
   }
 
-  function addPlace(place) {
+  function addPlace(place, userid) {
     // 1. Get place by url(id of DataStore)
     // 2.A Merge the existing one and new one if it's an existing one,
     //     and update the places.
@@ -116,44 +117,50 @@ var HistoryHelper = (() => {
 
     var id = place.url;
     var revisionId;
-    return _ensureStore().then(placesStore => {
-      revisionId = placesStore.revisionId;
-      return placesStore.get(id);
-    }).then(existedPlace => {
-      // Bug 1208352 - PlacesDS accessing code should be extracted to a shared
-      // code to prevent drifting out of sync from different piece codes.
-      if (existedPlace) {
-        var newPlace = mergeRecordsToDataStore(existedPlace, place);
-        return placesStore.put(newPlace, id, revisionId);
-      }
-      return placesStore.add(place, id, revisionId).then(() => {
-        return setDataStoreId(place.fxsyncId, id);
+    return _ensureStore().then(store => {
+      revisionId = store.revisionId;
+      return store.get(id).then(existedPlace => {
+        // Bug 1208352 - PlacesDS accessing code should be extracted to a shared
+        // code to prevent drifting out of sync from different piece codes.
+        if (existedPlace) {
+          var newPlace = mergeRecordsToDataStore(existedPlace, place);
+          return store.put(newPlace, id, revisionId).then(() => {
+            return setDataStoreId(place.fxsyncId, id);
+          });
+        }
+        return store.add(place, id, revisionId).then(() => {
+          return setDataStoreId(place.fxsyncId, id, userid);
+        });
       });
     }).catch(e => {
       console.error(e);
     });
   }
 
-  function updatePlaces(places) {
+  function updatePlaces(places, userid) {
     return new Promise(resolve => {
       places.reduce((reduced, current) => {
         return reduced.then(() => {
           if (current.deleted) {
-            return deletePlace(current.fxsyncId);
+            return deletePlace(current.fxsyncId, userid);
           }
-          return addPlace(current);
+          return addPlace(current, userid);
         });
       }, Promise.resolve()).then(resolve);
     });
   }
 
-  function deletePlace(fxsyncId) {
+  function deletePlace(fxsyncId, userid) {
     var url;
-    return getDataStoreId(fxsyncId).then(id => {
+    return getDataStoreId(fxsyncId, userid).then(id => {
+      if (!id) {
+        console.warn('No DataStore ID corresponded to FxSyncID', fxsyncId);
+        return Promise.resolve();
+      }
       url = id;
       return _ensureStore();
-    }).then(placesStore => {
-      return placesStore.remove(url);
+    }).then(store => {
+      return store.remove(url);
     });
   }
 
@@ -227,7 +234,7 @@ DataAdapters.history = {
     "_status": "synced"
   }
 **/
-  _update(remoteRecords, lastModifiedTime) {
+  _update(remoteRecords, lastModifiedTime, userid) {
     var places = [];
     for (var i = 0; i < remoteRecords.length; i++) {
       var payload = remoteRecords[i].payload;
@@ -268,10 +275,9 @@ DataAdapters.history = {
     if (places.length === 0) {
       return Promise.resolve(false);
     }
-
-    return HistoryHelper.updatePlaces(places).then(() => {
+    return HistoryHelper.updatePlaces(places, userid).then(() => {
       var latestMtime = remoteRecords[0].last_modified;
-      return HistoryHelper.setSyncedCollectionMtime(latestMtime);
+      return HistoryHelper.setSyncedCollectionMtime(latestMtime, userid);
     }).then(() => {
       // Always return false for a read-only operation.
       return Promise.resolve(false);
@@ -283,12 +289,12 @@ DataAdapters.history = {
       console.warn('Two-way sync not implemented yet for bookmarks.');
     }
     var mtime;
-    return LazyLoader.load(['shared/js/async_storage.js'])
-    .then(HistoryHelper.getSyncedCollectionMtime).then(_mtime => {
+    return HistoryHelper.getSyncedCollectionMtime(options.userid)
+    .then(_mtime => {
       mtime = _mtime;
       return remoteHistory.list();
     }).then(list => {
-      return this._update(list.data, mtime);
+      return this._update(list.data, mtime, options.userid);
     });
   },
 

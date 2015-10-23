@@ -51,6 +51,7 @@
 'use strict';
 
 /* global
+  asyncStorage,
   crypto,
   FxSyncWebCrypto,
   Kinto
@@ -59,6 +60,8 @@
 /* exported
   SyncEngine
 */
+
+const SYNC_USERID = 'sync::userid';
 
 var SyncEngine = (function() {
   var createFxSyncIdSchema = () => {
@@ -187,6 +190,7 @@ uld be a Function`);
     this._controlCollections = {};
     this._fswc = new FxSyncWebCrypto();
     this._kinto = null;
+    this._xClientState = null;
     this._haveUnsyncedConflicts = {};
     this._ready = false;
   };
@@ -250,7 +254,7 @@ uld be a Function`);
 
       return collection.sync().then(syncResults => {
         if (syncResults.ok) {
-          return syncResults;
+          return syncResults; 
         }
         return Promise.reject(new SyncEngine.UnrecoverableError('SyncResults',
             collectionName, syncResults));
@@ -302,16 +306,80 @@ ting to fetch resource.`) {
       });
     },
 
+    /**
+      * _clear - Clear all local data from Kinto.js and asyncStorage.
+      * @param   {String} userid - The userid (xClientState) for whom to clear.
+      *                            Note that asyncStorage clear will be global.
+      * @returns {Promise}
+      */
+    _clear: function(userid) {
+      console.log('clear', userid);
+      return new Promise(resolve => {
+        asyncStorage.clear(resolve);
+      }).then(() => {
+        var tmpKinto = new Kinto({
+          bucket: 'syncto',
+          dbPrefix: userid
+        });
+        var collectionsToClear = ['meta', 'crypto', 'history', 'bookmarks'];
+        return Promise.all(collectionsToClear.map(collectionName => {
+          return tmpKinto.collection(collectionName).clear();
+        }));
+      });
+    },
+
+    /**
+      * _handleClear - Check if a DataStore was cleared, call this._clear with
+      *                the previous userid, if needed, and set new userid.
+      * @returns {Promise}
+      */
+    _handleClear: function() {
+      console.log('_handleClear');
+      const checkDataStore = (dsName) => {
+        console.log('getting');
+        return navigator.getDataStores(dsName).then(stores => {
+          console.log('stores', stores);
+          // Check if the last operation on this DS was a clear operation.
+          return stores[0].sync().next().then(task => {
+            if (task.operation === 'clear') {
+              return new Promise(resolve => {
+                asyncStorage.getItem(SYNC_USERID, resolve);
+              }).then(previousUserid => {
+                return this._clear(previousUserid);
+              }).then(() => {
+                console.log('check', dsName, true);
+                return true;
+              });
+            }
+            console.log('check', dsName, false);
+            return false;
+          });
+        });
+      };
+      return checkDataStore('bookmarks_store').then(wasCleared => {
+        if (!wasCleared) {
+          return checkDataStore('places');
+        }
+      });
+    },
+
     _ensureReady: function() {
       if (this._ready) {
         return Promise.resolve();
       }
       return generateXClientState(this._kB).then(xClientState => {
+        this._xClientState = xClientState;
+      }).then(() => {
+        return this._handleClear();
+      }).then(() => {
         this._kinto = this._createKinto({
-           URL: this._URL,
-           assertion: this._assertion,
-           xClientState
-         });
+          URL: this._URL,
+          assertion: this._assertion,
+          xClientState: this._xClientState
+        });
+        return new Promise(resolve => {
+          asyncStorage.setItem(SYNC_USERID, this._xClientState, resolve);
+        });
       }).then(() => {
         return this._syncCollection('meta');
       }).then(() => {
@@ -376,8 +444,8 @@ rse crypto/keys payload as JSON`));
       return this._ensureReady().then(() => {
         var promises = [];
         for (var collectionName in collectionOptions) {
+          collectionOptions[collectionName].userid = this._xClientState;
           promises.push(this._updateCollection(collectionName,
-               //TODO: actually use this, see bug 1209934
                collectionOptions[collectionName]));
         }
         return Promise.all(promises);

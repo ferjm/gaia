@@ -160,6 +160,10 @@ empting to fetch resource.`));
     create() {},
     update() {},
     delete() {},
+    clear: function() {
+      console.log('cleared!', this.collectionName);
+      return Promise.resolve();
+    }
   };
 
   var HttpCodeKintoCollectionMock = function(status) {
@@ -179,7 +183,7 @@ empting to fetch resource.`));
     },
     create() {},
     update() {},
-    delete() {},
+    delete() {}
   };
 
 
@@ -207,7 +211,8 @@ empting to fetch resource.`));
       };
 
       var unauthCase = () => {
-        if (kintoOptions.headers.Authorization !==
+        console.log('kintoOptions', kintoOptions);
+        if (kintoOptions.headers && kintoOptions.headers.Authorization !==
             'BrowserID test-assertion-mock') {
           return new HttpCodeKintoCollectionMock(401);
         }

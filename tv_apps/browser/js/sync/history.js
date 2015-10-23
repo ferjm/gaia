@@ -59,6 +59,9 @@ var SyncHistory = (function () {
     });
   }
 
+  // XXX start and stop can be moved to ds_helper.js as they are
+  // common to history and bookmarks
+
   function start() {
     if (syncDataStore) {
       return Promise.resolve();
@@ -76,16 +79,16 @@ var SyncHistory = (function () {
     if (!syncDataStore) {
       return Promise.reject('Uninitialized DataStore');
     }
-    return syncDataStore.unregisterStoreChangeEvent();
-  }
-
-  function clear() {
-    return SyncBrowserDB.clearHistoryDeep();
+    return syncDataStore.unregisterStoreChangeEvent().then(() => {
+      return syncDataStore.clear();
+    }).then(() => {
+      syncDataStore = null;
+      return SyncBrowserDB.clearHistoryDeep();
+    });
   }
 
   return {
     start: start,
-    stop: stop,
-    clear: clear
+    stop: stop
   };
 })();

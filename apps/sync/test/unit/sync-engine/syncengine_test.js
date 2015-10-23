@@ -8,13 +8,22 @@
   expect,
   FxSyncWebCrypto,
   Kinto,
+  MockasyncStorage,
+  MockNavigatorDatastore,
+  require,
   requireApp,
   setup,
   suite,
+  suiteSetup,
+  suiteTeardown,
   SyncEngine,
   SynctoServerFixture,
+  SYNC_USERID,
   test
 */
+
+require('/shared/test/unit/mocks/mock_navigator_datastore.js');
+require('/shared/test/unit/mocks/mock_async_storage.js');
 
 requireApp('sync/test/unit/sync-engine/adapter-mock.js');
 requireApp('sync/test/unit/fixtures/synctoserver.js');
@@ -27,9 +36,25 @@ var cloneObject = (obj) => {
 };
 
 suite('SyncEngine', function() {
+  var realDatastore, realAsyncStorage;
+
   // NB: this.timeout only works when passing ES5-style functions to all suites
   // and tests, see https://github.com/mochajs/mochajs.github.io/pull/14
   this.timeout(500);
+
+  suiteSetup(function() {
+    realAsyncStorage = window.asyncStorage;
+    window.asyncStorage = MockasyncStorage;
+
+    realDatastore = navigator.getDataStores;
+    navigator.getDataStores = MockNavigatorDatastore.getDataStores;
+  });
+
+  suiteTeardown(function() {
+    navigator.getDataStores = realDatastore;
+    window.asyncStorage = realAsyncStorage;
+  });
+
   suite('constructor', function() {
     test('constructs a SyncEngine object', function(done) {
       const options = SynctoServerFixture.syncEngineOptions;
@@ -152,10 +177,87 @@ ld be a Function`);
       });
     });
 
+    test('sets xClientState as SYNC_USERID in AsyncStorage', function(done) {
+      var asyncStorageSpy = this.sinon.spy(window.asyncStorage, 'setItem');
+      var se = new SyncEngine(SynctoServerFixture.syncEngineOptions);
+      se.syncNow({ history: {} }).then(function() {
+        expect(asyncStorageSpy.calledWith(SYNC_USERID,
+            SynctoServerFixture.xClientState)).to.equal(true);
+        done();
+      });
+    });
+
+    ['history', 'bookmarks'].forEach(store => {
+      test(`Clears old data after ${store} DS was cleared`, function(done) {
+        new Promise(resolve => {
+          window.asyncStorage.clear(() => {
+            window.asyncStorage.setItem('foo', 'bar', () => {
+              window.asyncStorage.setItem(SYNC_USERID, 'previousUser', () => {
+                resolve();
+              });
+            });
+          });
+        }).then(() => {
+          console.log('here we go 1');
+          var asClearSpy = this.sinon.spy(window.asyncStorage, 'clear');
+          console.log('here we go 2');
+          var asGetSpy = this.sinon.spy(window.asyncStorage, 'getItem');
+          console.log('here we go 3');
+          var realGetDataStores = navigator.getDataStores;
+          console.log('here we go 4');
+          navigator.getDataStores = function(dsName) {
+            console.log('mocked getDataStores', dsName);
+            var ds = new MockDatastoreObj();
+            console.log('constructing DS for ', dsName);
+            if (dsName === store) {
+              ds._tasks = [
+                {
+                  operation: 'clear',
+                  id: 0,
+                  data: {}
+                },
+                {
+                  operation: 'done',
+                  id: 0,
+                  data: {}
+                },
+              ];
+            }
+            return Promise.resolve([ ds ]);
+          };
+          console.log('constructing');
+          var se = new SyncEngine(SynctoServerFixture.syncEngineOptions);
+          console.log('syncing');
+          se.syncNow({ history: {} }).then(function() {
+            console.log('checking', asGetSpy.calledWith(SYNC_USERID,
+                SynctoServerFixture.xClientState), asClearSpy.called());
+            expect(asGetSpy.calledWith(SYNC_USERID,
+                SynctoServerFixture.xClientState)).to.equal(true);
+            expect(asClearSpy.called()).to.equal(true);
+            navigator.getDataStores = realGetDataStores;
+            done();
+          });
+        });
+      });
+    });
+
+    test(`Does not clear old data if no DS was cleared`, function(done) {
+      var asClearSpy = this.sinon.spy(window.asyncStorage, 'clear');
+      var se = new SyncEngine(SynctoServerFixture.syncEngineOptions);
+      se.syncNow({ history: {} }).then(function() {
+        expect(asClearSpy.called()).to.equal(false);
+        navigator.getDataStores = realGetDataStores;
+        done();
+      });
+    });
+
     test('Passes options to the DataAdapter', function(done) {
       var se = new SyncEngine(SynctoServerFixture.syncEngineOptions);
       se.syncNow({ history: { readonly: true } }).then(function() {
-        expect(AdapterMock.options).to.deep.equal({ readonly: true });
+        expect(AdapterMock.options).to.deep.equal({
+          readonly: true,
+          userid: SynctoServerFixture.xClientState
+        });
         done();
       });
     });
