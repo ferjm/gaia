@@ -178,7 +178,7 @@ SettingsAppBuilder.prototype.writeGitCommit = function(options) {
 SettingsAppBuilder.prototype.enableDataSync = function(options) {
   var fileList = {
     process:[
-      ['elements', 'root.html'],
+      ['elements', 'firefox_accounts.html'],
       ['index.html']
     ],
     remove:[

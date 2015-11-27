@@ -710,6 +710,25 @@ section ul.operate-certificate {
     text-overflow: ellipsis;
   }
 
+  .fxa-profile-pic {
+    width: 17rem;
+	  height: 17rem;
+	  border-radius: 9rem;
+	  background: url(http://blog.mozilla.org/hacks/files/2014/07/ferjm.jpg) no-repeat;
+    margin-left: 5rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    border: 0.5rem solid #eee;
+    box-shadow: 0 0.2rem 0.2rem rgba(0, 0, 0, 0.3);
+  }
+
+  .fxa-profile-name {
+    text-align: center;
+  }
+
   /******************************************************************************
    * Firefox Sync
    */

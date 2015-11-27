@@ -45,13 +45,33 @@
     </div>
     <div id="fxa-logged-in" hidden>
       <header>
-        <h2 data-l10n-id="fxa-about"></h2>
+        <h2 data-l10n-id="fxa-user"></h2>
       </header>
       <ul>
         <li class="description">
-          <p data-l10n-id="fxa-overview"></p>
-          <p data-l10n-id="fxa-logged-in-text" id="fxa-logged-in-text"></p>
+          <div class="fxa-profile-pic"></div>
+          <p class="fxa-profile-name" data-l10n-id="fxa-logged-in-text" id="fxa-logged-in-text"></p>
         </li>
+      </ul>
+
+      <header>
+        <h2>Services</h2>
+      </header>
+      <ul>
+        <li>
+          <a id="menuItem-findmydevice" class="menu-item" data-icon="find" href="#findmydevice" data-l10n-id="findmydeviceSection" aria-describedby="findmydevice-desc">
+            <span data-l10n-id="findmydevice"></span>
+            <small id="findmydevice-desc" class="findmydevice-desc menu-item-desc"></small>
+          </a>
+        </li>
+        <!--IFDEF_FIREFOX_SYNC
+        <li>
+          <a id="menuItem-fxsync" class="menu-item" data-icon="download" href="#fxsync" data-l10n-id="fxsyncSection" aria-describedby="fxsync-desc">
+            <span data-l10n-id="fxsync"></span>
+            <small id="fxsync-desc" class="fxsync-desc menu-item-desc"></small>
+          </a>
+        </li>
+        ENDIF_FIREFOX_SYNC-->
       </ul>
 
       <header>
